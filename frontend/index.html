@@ -9,9 +9,6 @@
         <!-- Proj4js for reprojection -->
         <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.8.1/proj4.js"></script>
 
-        <!-- Your app logic -->
-        <script src="map.js"></script>
-
         <!-- Google Maps API -->
         <script
             src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCTYZ2ogy4XY8GmiIpiw89OpE9iRk5MnxM&callback=initMap"
@@ -19,6 +16,16 @@
         </script>
     </head>
     <body>
+        <h1>WSR88-D Coverage</h1>
+
+        <div id="controls">
+            <div id="threshold-control">
+                <label for="threshold-input">Threshold (ft):</label>
+                <input type="number" id="threshold-input" placeholder="3000">
+            </div>
+        </div>
+
         <div id="map"></div>
+        <script src="map.js"></script>
       </body>
 </html>

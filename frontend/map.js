@@ -8,14 +8,27 @@ proj4.defs(
 // Global variables
 let map = null;
 let currentPolygon = null;
+const thresholdInput = document.getElementById("threshold-input");
 
 // Called by the Maps API once it’s loaded
 function initMap() {
   const centerUSA = { lat: 39.5, lng: -98.35 };
 
-  map = new google.maps.Map(  // <<<<<<< Initialize global map
+  map = new google.maps.Map(
     document.getElementById("map"),
-    { zoom: 4, center: centerUSA }
+    { zoom: 5, 
+      center: centerUSA,
+      styles: [
+        {
+          featureType: "administrative",
+          elementType: "labels",
+          stylers: [
+            { visibility: "off" }
+          ]
+        }
+      ]
+    
+    }
   );
 
   map.addListener("click", (e) => {
@@ -29,8 +42,15 @@ function initMap() {
       [lng, lat]
     );
 
-    // Send the coordinates to the server
-    sendRadarRequest(x5070, y5070);
+    // Get the threshold value from the input field
+    const rawThreshold = thresholdInput.value.trim();
+    const threshold = parseFloat(rawThreshold);
+
+    if (!isNaN(threshold) && isFinite(threshold)) {
+      sendRadarRequest(x5070, y5070, threshold);
+    } else {
+      sendRadarRequest(x5070, y5070);
+    }
   });
 }
 

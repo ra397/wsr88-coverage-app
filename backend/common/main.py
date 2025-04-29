@@ -109,10 +109,6 @@ def coords_to_polygon_geojson(coords, epsg_code=5070):
         }
     }
     
-    # Save to file
-    with open('output.geojson', 'w') as f:
-        json.dump(geojson, f, indent=4)
-
     return geojson
 
 def makeGTiff(fn, data, left, top, x_cell, y_cell, epsg=const.EPSG, bands=1, type = gdal.GDT_Float32):
