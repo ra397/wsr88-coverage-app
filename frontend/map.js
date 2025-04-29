@@ -9,11 +9,44 @@ proj4.defs(
 let map = null;
 let currentPolygon = null;
 let polygons = [];
+let coveragePolygons = [] // original polygons from the existing radar locations
+let coverageVisible = true;
+const radarCodes = [
+  'TMSP', 'TBNA', 'TOKC', 'TMCO', 'KLZK', 'KCBW', 'KABX', 'KBHX', 'KGLD', 'KLBB', 'KLSX', 'KNKX', 'TMCI',
+  'KGRR', 'KEMX', 'KFSX', 'KMAX', 'KMOB', 'KVNX', 'TCLT', 'KLGX', 'KAKQ', 'KDYX', 'KEVX', 'KIWX', 'KLNX',
+  'KMBX', 'KMXX', 'TMDW', 'TDTW', 'TMKE', 'KBMX', 'KAMX', 'KBBX', 'KDGX', 'KILN', 'KJKL', 'KLTX', 'KSJT',
+  'TICH', 'KATX', 'KEPZ', 'KFSX', 'KGRB', 'KIND', 'KSGF', 'KTBW', 'KYUX', 'TLAS', 'TTPA', 'TIAD', 'KBOX',
+  'KCXX', 'KDOX', 'KGJX', 'KPUX', 'KRIW', 'KSOX', 'TORD', 'TCMH', 'KVTX', 'TFLL', 'TPHL', 'TRDU', 'TSLC',
+  'KCLE', 'KAMA', 'KARX', 'KCBX', 'KCYS', 'KICT', 'KINX', 'KLOT', 'KMKX', 'KPDT', 'KTFX', 'KUEX', 'TIAH',
+  'KIWA', 'KEAX', 'KFCX', 'KFFC', 'KNQA', 'KTLH', 'KVBX', 'KFSD', 'KCRP', 'KCLX', 'KFDX', 'KGGW', 'KGRK',
+  'KHGX', 'KMAF', 'TDAL', 'KOUN', 'KAMX', 'KBGM', 'KBYX', 'KHTX', 'KMLB', 'KPBZ', 'KEYX', 'KSRX', 'TADW',
+  'TDEN', 'TMEM', 'KDDC', 'KCCX', 'KDMX', 'KGWX', 'KMHX', 'KOHX', 'KOTX', 'TBOS', 'TCVG', 'TMSY', 'KGSP',
+  'KILX', 'KJGX', 'KHDC', 'TDAY', 'TMIA', 'TIDS', 'KFDR', 'KUDX', 'KRAX', 'KENX', 'KMVX', 'KAPX', 'KLCH',
+  'TATL', 'TPHX', 'TSTL', 'TTUL', 'TPBI', 'KRLX', 'KDFX', 'KDVN', 'KMQT', 'KMRX', 'KMSX', 'KPOE', 'KVAX',
+  'TBWI', 'THOU', 'TJFK', 'TEWR', 'TPIT', 'KDLH', 'KVWX', 'KCAE', 'KDTX', 'KFWS', 'KHNX', 'KHPX', 'KICX',
+  'KLRX', 'KLWX', 'KMPX', 'KPAH', 'KHDX', 'KTYX', 'TLVE', 'KGYX', 'KBIS', 'KBLX', 'KDIX', 'KEOX', 'KESX',
+  'KMUX', 'KRTX', 'KTLX', 'KBUF', 'KBRO', 'KDAX', 'KTWX', 'KSFX', 'KSHV', 'TDFW', 'TSDF', 'TDCA', 'KABR',
+  'KEWX', 'KRGX', 'KJAX', 'KLVX', 'KOKX', 'KOAX', 'KLIX', 'KMTX', 'KFTG'
+];
+
 
 
 const thresholdInput = document.getElementById("threshold-input");
 document.getElementById('undo-btn').addEventListener('click', undoLastPolygon);
 document.getElementById('clear-btn').addEventListener('click', clearAllPolygons);
+const coverageCheckbox = document.getElementById("coverage-checkbox");
+
+coverageCheckbox.addEventListener('change', () => {
+  coverageVisible = coverageCheckbox.checked;
+
+  coveragePolygons.forEach(polygon => {
+    if (coverageVisible) {
+      polygon.setMap(map);
+    } else {
+      polygon.setMap(null);
+    }
+  });
+});
 
 // Called by the Maps API once it’s loaded
 function initMap() {
@@ -58,6 +91,9 @@ function initMap() {
       sendRadarRequest(x5070, y5070);
     }
   });
+
+  coverageCheckbox.checked = true;
+  loadAllCoveragePolygons();
 }
 
 // Function to handle the form submission of coordinates
@@ -102,18 +138,39 @@ async function sendRadarRequest(easting, northing, maxAlt = 3000) {
     console.log("GeoJSON received:", data.geojson);
 
     const geojson = data.geojson;
-    plotGeoJsonPolygon(geojson);
+    plotGeoJsonPolygon(geojson, polygons);
   } else {
     const error = await response.json();
     console.error("Error from backend:", error);
   }
 }
 
-function plotGeoJsonPolygon(geojsonObject) {
+async function loadAllCoveragePolygons() {
+  for (const code of radarCodes) {
+    const url = `resources/GeoJSON_OUTPUTS/${code}.geojson`;
+
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        console.warn(`Missing or invalid file: ${url}`);
+        continue;
+      }
+
+      const geojsonObject = await response.json();
+      plotGeoJsonPolygon(geojsonObject, coveragePolygons); // pass coveragePolygons array
+    } catch (error) {
+      console.error(`Error loading ${url}:`, error);
+    }
+  }
+}
+
+function plotGeoJsonPolygon(geojsonObject, targetArray) {
   if (!geojsonObject || geojsonObject.type !== 'FeatureCollection') {
     console.error("Expected a FeatureCollection but got:", geojsonObject);
-    return;
+    return [];
   }
+
+  const createdPolygons = [];
 
   geojsonObject.features.forEach((feature) => {
     if (!feature.geometry || feature.geometry.type !== 'Polygon') {
@@ -135,16 +192,20 @@ function plotGeoJsonPolygon(geojsonObject) {
 
     const polygon = new google.maps.Polygon({
       paths: polygonCoords,
-      strokeColor: '#FF0000',
+      strokeColor: '#FF0000',   // <-- default styling
       strokeOpacity: 0.8,
       strokeWeight: 2,
       fillColor: '#FF0000',
-      fillOpacity: 0.35
+      fillOpacity: 0.35,
+      map: map
     });
 
     polygon.setMap(map);
-    polygons.push(polygon);
+    targetArray.push(polygon);
+    createdPolygons.push(polygon);
   });
+
+  return createdPolygons;
 }
 
 // remove the most recent polygon
