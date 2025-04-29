@@ -8,7 +8,12 @@ proj4.defs(
 // Global variables
 let map = null;
 let currentPolygon = null;
+let polygons = [];
+
+
 const thresholdInput = document.getElementById("threshold-input");
+document.getElementById('undo-btn').addEventListener('click', undoLastPolygon);
+document.getElementById('clear-btn').addEventListener('click', clearAllPolygons);
 
 // Called by the Maps API once it’s loaded
 function initMap() {
@@ -138,5 +143,18 @@ function plotGeoJsonPolygon(geojsonObject) {
     });
 
     polygon.setMap(map);
+    polygons.push(polygon);
   });
+}
+
+// remove the most recent polygon
+function undoLastPolygon() {
+  const last = polygons.pop();
+  if (last) last.setMap(null);
+}
+
+// remove all polygons
+function clearAllPolygons() {
+  polygons.forEach(poly => poly.setMap(null));
+  polygons = [];
 }
