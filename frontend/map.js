@@ -18,6 +18,7 @@ function initMap() {
     document.getElementById("map"),
     { zoom: 5, 
       center: centerUSA,
+      draggableCursor: "crosshair",
       styles: [
         {
           featureType: "administrative",
@@ -52,6 +53,30 @@ function initMap() {
       sendRadarRequest(x5070, y5070);
     }
   });
+}
+
+// Function to handle the form submission of coordinates
+function submitCoords() {
+  // Get the coordinates from the input fields
+  const lat = parseFloat(document.getElementById("latitude-input").value);
+  const lng = parseFloat(document.getElementById("longitude-input").value);
+
+  const [x5070, y5070] = proj4(
+    "EPSG:4326",
+    "EPSG:5070",
+    [lng, lat]
+  );
+
+  // Send the coordinates to the backend
+  const rawThreshold = thresholdInput.value.trim();
+  const threshold = parseFloat(rawThreshold);
+
+  if (!isNaN(threshold) && isFinite(threshold)) {
+    sendRadarRequest(x5070, y5070, threshold);
+  }
+  else {
+    sendRadarRequest(x5070, y5070);
+  }
 }
 
 async function sendRadarRequest(easting, northing, maxAlt = 3000) {
