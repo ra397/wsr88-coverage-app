@@ -1,0 +1,7 @@
+frontend/resources
+WSR88_1D/__pycache__
+WSR88_1D/_dem090
+WSR88_1D/KFTG_blocked_top_90m_0.10deg_1.33.tif
+WSR88_1D/radar_beam_90m_0.10deg_1.33.npz
+WSR88_1D/radar_beam_90m_0.20deg_1.33.npz
+WSR88_1D/nexrad_epsg5070.geojson

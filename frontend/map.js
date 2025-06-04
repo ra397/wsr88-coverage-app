@@ -1,0 +1,118 @@
+let map;
+
+// HTML Elements
+const thresholdInput = document.getElementById('threshold-input');
+
+// Define EPSG:5070 (NAD83 / CONUS Albers Equal Area)
+proj4.defs(
+  "EPSG:5070",
+  "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 " +
+  "+lon_0=-96 +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs"
+);
+
+function getBoundsFromCenter(lat, lng, halfHeightDeg, halfWidthDeg) {
+  return {
+    north: lat + halfHeightDeg,
+    south: lat - halfHeightDeg,
+    east: lng + halfWidthDeg,
+    west: lng - halfWidthDeg,
+  };
+}
+
+function initMap() {
+  const centerUSA = { lat: 39.5, lng: -98.35 };
+
+  // Initialize the map
+  map = new google.maps.Map(document.getElementById("map"), {
+    zoom: 5,
+    center: centerUSA,
+    draggableCursor: 'crosshair',
+    styles: [
+      {
+        featureType: 'administrative',
+        elementType: 'labels',
+        stylers: [{ visibility: 'off' }]
+      }
+    ]
+  });
+
+  // Event handler when user clicks on a point in the map
+  map.addListener("click", (e) => {
+    // Get the lat and lon coordinates of the point that was clicked
+    const lat = e.latLng.lat();
+    const lng = e.latLng.lng();
+
+    // Convert to epsg:5070 
+    const [x5070, y5070] = proj4('EPSG:4326', 'EPSG:5070', [lng, lat]);
+
+    // Get visibility threshold from text input
+    const threshold = parseFloat(thresholdInput.value.trim());
+
+    // Send request to backend
+    if (!isNaN(threshold) && isFinite(threshold)) {
+      sendRadarRequest(x5070, y5070, threshold);
+    } 
+    else {
+      sendRadarRequest(x5070, y5070);
+    }
+  });
+}
+
+async function sendRadarRequest(easting, northing, maxAlt = 3000) {
+  try {
+    const response = await fetch("http://localhost:8000/calculate_blockage", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        easting: easting,
+        northing: northing,
+        max_alt: maxAlt,
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error("Radar coverage request failed.");
+    }
+
+    
+    const blob = await response.blob();
+    const imageUrl = URL.createObjectURL(blob);
+    console.log(imageUrl);
+        // Image metadata
+    const pixelSize = 90;         // meters per pixel
+    const matrixSize = 5109;      // pixels
+    const halfExtent = (pixelSize * matrixSize) / 2;  // = 229905 meters
+
+    // EPSG:5070 bounds
+    const bounds5070 = {
+      west: easting - halfExtent,
+      east: easting + halfExtent,
+      south: northing - halfExtent,
+      north: northing + halfExtent,
+    };
+
+    // Convert EPSG:5070 bounds to EPSG:4326
+    const [westLng, southLat] = proj4('EPSG:5070', 'EPSG:4326', [bounds5070.west, bounds5070.south]);
+    const [eastLng, northLat] = proj4('EPSG:5070', 'EPSG:4326', [bounds5070.east, bounds5070.north]);
+
+    const overlayBounds = {
+      north: northLat,
+      south: southLat,
+      east: eastLng,
+      west: westLng,
+    };
+
+    // Add image as a GroundOverlay
+    const overlay = new google.maps.GroundOverlay(
+      imageUrl,
+      overlayBounds,
+      { opacity: 0.7 }
+    );
+    overlay.setMap(map);
+  } 
+  catch (err) {
+    console.log("Error fetching radar coverage: ", err);
+  }
+}

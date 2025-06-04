@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>WSR88-D Coverage</title>  
+        <link rel="stylesheet" href="styles.css">
+
+        <!-- Proj4js for reprojection -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.8.1/proj4.js"></script>
+
+        <!-- Google Maps API -->
+        <script
+            src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCTYZ2ogy4XY8GmiIpiw89OpE9iRk5MnxM&callback=initMap"
+            async defer>
+        </script>
+    </head>
+    <body>
+        <h1>WSR88-D Coverage</h1>
+
+        <div id="controls">
+            <div id="threshold-control">
+                <label for="threshold-input">Threshold (ft):</label>
+                <input type="number" id="threshold-input" placeholder="3000">
+            </div>
+
+            <div id="coordinates-control">
+                <form id="coordinates-form">
+                    <label for="latitude-input">Latitude:</label>
+                    <input type="number" id="latitude-input" placeholder="37.7749" step="0.0001">
+                    <label for="longitude-input">Longitude:</label>
+                    <input type="number" id="longitude-input" placeholder="-122.4194" step="0.0001">
+                    <button type="button" onclick="submitCoords()">Submit</button>
+                </form>
+            </div>
+
+            <button type="button" id="undo-btn">Go Back</button>
+            <button type="button" id="clear-btn">Clear All</button>
+
+            <div id="coverage-controls">
+                <label><input type="radio" name="coverage" value="none" checked> None</label>
+                <label><input type="radio" name="coverage" value="3k"> 3k ft Coverage</label>
+                <label><input type="radio" name="coverage" value="6k"> 6k ft Coverage</label>
+                <label><input type="radio" name="coverage" value="10k"> 10k ft Coverage</label>
+            </div>
+
+        </div>
+
+        <div id="map"></div>
+        <script src="map.js"></script>
+      </body>
+</html>
