@@ -1,5 +1,7 @@
 let map;
 
+let isLoading = false;
+
 // Define EPSG:5070 (NAD83 / CONUS Albers Equal Area)
 proj4.defs(
   "EPSG:5070",
@@ -36,6 +38,9 @@ function initMap() {
 
   // Event handler when user clicks on a point in the map
   map.addListener("click", (e) => {
+    // Do not allow user to click on map if a request is being processed
+    if (isLoading) return;
+
     // Get the lat and lon coordinates of the point that was clicked
     const lat = e.latLng.lat();
     const lng = e.latLng.lng();
@@ -59,6 +64,9 @@ function initMap() {
 
 async function sendRadarRequest(easting, northing, maxAlt = null, towerHeight = null) {
   try {
+    isLoading = true;
+    showSpinner();
+
     const payload = {
       easting: easting,
       northing: northing,
@@ -125,6 +133,10 @@ async function sendRadarRequest(easting, northing, maxAlt = null, towerHeight = 
   catch (err) {
     console.log("Error fetching radar coverage: ", err);
   }
+  finally {
+    isLoading = false;
+    hideSpinner();
+  }
 }
 
 function toggleWindow(id) {
@@ -152,4 +164,12 @@ function getInput(input) {
   }
 
   return value;
+}
+
+function showSpinner() {
+  document.getElementById("loading-spinner").style.display = "block";
+}
+
+function hideSpinner() {
+  document.getElementById("loading-spinner").style.display = "none";
 }
