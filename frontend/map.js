@@ -58,6 +58,8 @@ function initMap() {
 }
 
 async function sendRadarRequest(easting, northing, maxAlt = null, towerHeight = null) {
+  showSpinner();
+
   try {
     const payload = {
       easting: easting,
@@ -125,6 +127,9 @@ async function sendRadarRequest(easting, northing, maxAlt = null, towerHeight = 
   catch (err) {
     console.log("Error fetching radar coverage: ", err);
   }
+  finally {
+    hideSpinner();
+  }
 }
 
 function toggleWindow(id) {
@@ -152,4 +157,12 @@ function getInput(input) {
   }
 
   return value;
+}
+
+function showSpinner() {
+  document.getElementById("loading-spinner").style.display = "block";
+}
+
+function hideSpinner() {
+  document.getElementById("loading-spinner").style.display = "none";
 }
