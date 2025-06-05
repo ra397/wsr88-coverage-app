@@ -4,6 +4,7 @@ from fastapi.responses import StreamingResponse
 from processor import calculate_coverage
 import io
 from fastapi.middleware.cors import CORSMiddleware
+from typing import List, Optional
 
 app = FastAPI()
 
@@ -20,6 +21,7 @@ class CoverageRequest(BaseModel):
     northing: float
     tower_ft: float | None = None
     max_alt: float = 3000
+    elevation_angles: Optional[List[float]] = None
 
 @app.post("/calculate_blockage")
 def calculate_blockage(req: CoverageRequest):
@@ -29,7 +31,8 @@ def calculate_blockage(req: CoverageRequest):
             easting=req.easting,
             northing=req.northing,
             tower_ft=req.tower_ft,
-            max_alt=req.max_alt
+            max_alt=req.max_alt,
+            elevation_angles=req.elevation_angles
         )
         return StreamingResponse(img_buf, media_type="image/png")
 

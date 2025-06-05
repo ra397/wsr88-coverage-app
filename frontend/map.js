@@ -80,6 +80,9 @@ async function sendRadarRequest(easting, northing, maxAlt = null, towerHeight = 
       payload.tower_ft = towerHeight;
     }
 
+    const angles = getCheckedElevationAngles();
+    if (angles.length > 0) payload.elevation_angles = angles;
+
     console.log("Request sent: ", payload);
 
     const response = await fetch("http://localhost:8000/calculate_blockage", {

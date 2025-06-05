@@ -10,3 +10,6 @@ WSR88_1D/_dem090
 WSR88_1D/*.tif
 WSR88_1D/*.npz
 WSR88_1D/*.geojson
+
+# Ignore processor.py outputs, for testing purposes only
+outputs
