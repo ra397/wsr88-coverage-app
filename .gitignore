@@ -1,7 +1,12 @@
-frontend/resources
-WSR88_1D/__pycache__
+# Ignore Python bytecode
+__pycache__/
+*.pyc
+
+# Ignore frontend build artifacts
+frontend/resources/
+
+# Ignore raster and model files
 WSR88_1D/_dem090
-WSR88_1D/KFTG_blocked_top_90m_0.10deg_1.33.tif
-WSR88_1D/radar_beam_90m_0.10deg_1.33.npz
-WSR88_1D/radar_beam_90m_0.20deg_1.33.npz
-WSR88_1D/nexrad_epsg5070.geojson
+WSR88_1D/*.tif
+WSR88_1D/*.npz
+WSR88_1D/*.geojson
