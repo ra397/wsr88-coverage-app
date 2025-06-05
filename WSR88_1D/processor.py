@@ -14,6 +14,9 @@ def worker(args):
     bt.dem_src = DEM_SRC
     bt.setRadar(easting, northing, ft2m(tower_ft))
     bt.readDEM(quarter_pref=qr)
+
+    print(bt.model['antenna_elevations'][:])
+
     for ae in bt.model['antenna_elevations'][:]:
         bt.calcBlockage(ae, ft2m(max_alt))
     return {qr: quarterRotate(pref=qr, data=bt.getBlockage())}

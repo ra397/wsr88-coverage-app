@@ -173,3 +173,11 @@ function showSpinner() {
 function hideSpinner() {
   document.getElementById("loading-spinner").style.display = "none";
 }
+
+// Returns a list of checked elevation angles
+function getCheckedElevationAngles() {
+  const checkboxes = document.querySelectorAll('#elevation-angle-checkboxes input[type="checkbox"]');
+  return Array.from(checkboxes)
+              .filter(cb => cb.checked)
+              .map(cb => parseFloat(cb.value));
+}
