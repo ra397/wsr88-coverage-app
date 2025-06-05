@@ -1,8 +1,5 @@
 let map;
 
-// HTML Elements
-const thresholdInput = document.getElementById('threshold-input');
-
 // Define EPSG:5070 (NAD83 / CONUS Albers Equal Area)
 proj4.defs(
   "EPSG:5070",
@@ -27,6 +24,7 @@ function initMap() {
     zoom: 5,
     center: centerUSA,
     draggableCursor: 'crosshair',
+    fullscreenControl: false,
     styles: [
       {
         featureType: 'administrative',
@@ -45,16 +43,8 @@ function initMap() {
     // Convert to epsg:5070 
     const [x5070, y5070] = proj4('EPSG:4326', 'EPSG:5070', [lng, lat]);
 
-    // Get visibility threshold from text input
-    const threshold = parseFloat(thresholdInput.value.trim());
-
     // Send request to backend
-    if (!isNaN(threshold) && isFinite(threshold)) {
-      sendRadarRequest(x5070, y5070, threshold);
-    } 
-    else {
-      sendRadarRequest(x5070, y5070);
-    }
+    sendRadarRequest(x5070, y5070);
   });
 }
 
@@ -80,7 +70,8 @@ async function sendRadarRequest(easting, northing, maxAlt = 3000) {
     const blob = await response.blob();
     const imageUrl = URL.createObjectURL(blob);
     console.log(imageUrl);
-        // Image metadata
+    
+    // Image metadata
     const pixelSize = 90;         // meters per pixel
     const matrixSize = 5109;      // pixels
     const halfExtent = (pixelSize * matrixSize) / 2;  // = 229905 meters
@@ -115,4 +106,14 @@ async function sendRadarRequest(easting, northing, maxAlt = 3000) {
   catch (err) {
     console.log("Error fetching radar coverage: ", err);
   }
+}
+
+function toggleWindow(id) {
+  // Close other windows
+  document.querySelectorAll('.sidebar-window').forEach(w => {
+    if (w.id !== id) w.style.display = 'none';
+  });
+
+  const el = document.getElementById(id);
+  el.style.display = (el.style.display === 'block') ? 'none' : 'block';
 }
