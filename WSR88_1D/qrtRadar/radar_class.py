@@ -111,8 +111,8 @@ class beamTracker1D:
 
         self.emptyDEM()
         data, ix, iy, gt  = readDEM(path=self.dem_src, easting=self.easting, northing=self.northing, quarter_pref=self.quarter_pref, width=self.cols, height=self.rows)
-        print (f'QRT DEM.shape: {data.shape}')
-        print (ix, iy, gt)
+        #print (f'QRT DEM.shape: {data.shape}')
+        #print (ix, iy, gt)
         self.dem_1d =  quarterRotate(
             self.quarter_pref,
             data
@@ -124,7 +124,7 @@ class beamTracker1D:
     def showResolution(self) -> None:
         angular = round(90 / (self.model['unq_az'].shape[0] - 2), 2)
         liniar = round(230e3 / self.cols, 0)
-        print(f'ncols x nrows: {self.cols} x {self.cols}\nangular step: {angular}, liniar: {liniar}')
+        #print(f'ncols x nrows: {self.cols} x {self.cols}\nangular step: {angular}, liniar: {liniar}')
 
     def calcBlockage(self, antenna_elevation: float, max_altitude: float=None) -> None:
         if not max_altitude is None:

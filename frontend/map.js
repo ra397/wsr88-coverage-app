@@ -43,23 +43,43 @@ function initMap() {
     // Convert to epsg:5070 
     const [x5070, y5070] = proj4('EPSG:4326', 'EPSG:5070', [lng, lat]);
 
+    // Get AGL Threshold input
+    const maxAlt = getInput(document.getElementById("aglThreshold-input"));
+    // Get tower height input
+    const towerHeight = getInput(document.getElementById("towerHeight-input"));
+
+    // If the user entered an invalid input, return and do not send radar request
+    if (document.getElementById("aglThreshold-input").value && maxAlt === null) return;
+    if (document.getElementById("towerHeight-input").value && towerHeight === null) return;
+
     // Send request to backend
-    sendRadarRequest(x5070, y5070);
+    sendRadarRequest(x5070, y5070, maxAlt, towerHeight);
   });
 }
 
-async function sendRadarRequest(easting, northing, maxAlt = 3000) {
+async function sendRadarRequest(easting, northing, maxAlt = null, towerHeight = null) {
   try {
+    const payload = {
+      easting: easting,
+      northing: northing,
+    };
+
+    if (maxAlt !== null) {
+      payload.max_alt = maxAlt;
+    }
+
+    if (towerHeight !== null) {
+      payload.tower_ft = towerHeight;
+    }
+
+    console.log("Request sent: ", payload);
+
     const response = await fetch("http://localhost:8000/calculate_blockage", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({
-        easting: easting,
-        northing: northing,
-        max_alt: maxAlt,
-      })
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
@@ -69,8 +89,7 @@ async function sendRadarRequest(easting, northing, maxAlt = 3000) {
     
     const blob = await response.blob();
     const imageUrl = URL.createObjectURL(blob);
-    console.log(imageUrl);
-    
+
     // Image metadata
     const pixelSize = 90;         // meters per pixel
     const matrixSize = 5109;      // pixels
@@ -116,4 +135,21 @@ function toggleWindow(id) {
 
   const el = document.getElementById(id);
   el.style.display = (el.style.display === 'block') ? 'none' : 'block';
+}
+
+// Given an html input element, get the value
+// Returns value if value is valid, null otherwise
+function getInput(input) {
+  // Get the value from the input element
+  const value = parseFloat(input.value);
+  // Verify the value
+  if (value < 0) {
+    alert("Please use non-negative values.");
+    return null;
+  }
+  if (isNaN(value) || value < 0) {
+    return null;
+  }
+
+  return value;
 }

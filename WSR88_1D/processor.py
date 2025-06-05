@@ -5,8 +5,8 @@ from time import time
 from math import floor
 from multiprocessing import Pool
 
-RADAR_NPZ = r"C:\Users\rabia\Documents\gis\projects\WSR88_1D\WSR88_1D\radar_beam_90m_0.10deg_1.33.npz"
-DEM_SRC = r"C:\Users\rabia\Documents\gis\projects\WSR88_1D\WSR88_1D\_dem090"
+RADAR_NPZ = r"radar_beam_90m_0.10deg_1.33.npz"
+DEM_SRC = r"_dem090"
 
 def worker(args):
     qr, easting, northing, tower_ft, max_alt = args
@@ -20,7 +20,12 @@ def worker(args):
 
 def calculate_coverage(easting, northing, tower_ft=None, max_alt=3000):
     if tower_ft is None:
-        tower_ft = m2ft(read_dem_value(DEM_SRC, easting, northing) + 40)
+        tower_ft = m2ft(read_dem_value(DEM_SRC, easting, northing) + ft2m(100))
+    else:
+        tower_ft = m2ft(read_dem_value(DEM_SRC, easting, northing) + ft2m(tower_ft))
+
+
+    print("Calculating coverage with: ", easting, northing, tower_ft, max_alt)
 
     total_tm = time()
     with Pool(4) as pool:
@@ -30,8 +35,11 @@ def calculate_coverage(easting, northing, tower_ft=None, max_alt=3000):
     print('Total -> ', time() - total_tm)
 
     img_buf = makePNG(combined)
+
+    '''
     with open("radar_coverage.png", "wb") as f:
         f.write(img_buf.getbuffer())
+    '''
 
     return img_buf
 

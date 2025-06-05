@@ -24,6 +24,7 @@ class CoverageRequest(BaseModel):
 @app.post("/calculate_blockage")
 def calculate_blockage(req: CoverageRequest):
     try:
+        print("Request recieved: ", req)
         img_buf = calculate_coverage(
             easting=req.easting,
             northing=req.northing,
