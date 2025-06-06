@@ -67,9 +67,12 @@ async function sendRadarRequest(easting, northing, maxAlt = null, towerHeight = 
     isLoading = true;
     showSpinner();
 
+    const beamModel = document.getElementById("beamModel-input").value;
+
     const payload = {
       easting: easting,
       northing: northing,
+      beam_model: beamModel,
     };
 
     if (maxAlt !== null) {

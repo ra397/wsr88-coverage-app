@@ -20,6 +20,7 @@ class CoverageRequest(BaseModel):
     northing: float
     tower_ft: float | None = None
     max_alt: float = 3000
+    beam_model: str = 'radar_beam_4_3.npz'
 
 @app.post("/calculate_blockage")
 def calculate_blockage(req: CoverageRequest):
@@ -29,7 +30,8 @@ def calculate_blockage(req: CoverageRequest):
             easting=req.easting,
             northing=req.northing,
             tower_ft=req.tower_ft,
-            max_alt=req.max_alt
+            max_alt=req.max_alt,
+            beam_model=req.beam_model
         )
         return StreamingResponse(img_buf, media_type="image/png")
 
