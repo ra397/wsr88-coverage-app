@@ -59,9 +59,12 @@ function initMap() {
 
 async function sendRadarRequest(easting, northing, maxAlt = null, towerHeight = null) {
   try {
+    const beamModel = document.getElementById("beamModel-input").value;
+
     const payload = {
       easting: easting,
       northing: northing,
+      beam_model: beamModel,
     };
 
     if (maxAlt !== null) {

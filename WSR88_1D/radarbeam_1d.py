@@ -51,7 +51,7 @@ if __name__ == '__main__':
         # antenna = radians(ae)                       # for center of the beam
         antenna = radians(ae - (.9/2))              # -9/2 for bottom of the beam
         ray_dist = getSlant(antenna, earth_dist)        # what beam propagation model ?
-        _ray_height = getElev4_3(antenna, ray_dist)
+        _ray_height = getElev1_21(antenna, ray_dist)
 
         _mask = earth_dist > max
         azims[_mask] = -999
@@ -63,7 +63,7 @@ if __name__ == '__main__':
     ur = [(t[0], t[0] + t[1]) for t in zip(ui, uc)]
 
     np.savez(
-        f'radar_beam_{step:d}m_{deg_fraction:.2f}deg_1.33',
+        f'radar_beam_1_21',
         antenna =   VCP12,
         height = ray_height,
         distancies = earth_dist.astype(np.float32),
