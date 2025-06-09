@@ -221,6 +221,12 @@ document.getElementById("popThreshold-submit").addEventListener("click", async f
     window.populationLayer.addGeoJson(geojson);
     window.populationLayer.setMap(map);
 
+    window.populationLayer.setStyle({
+      icon: {
+        url: "https://maps.gstatic.com/mapfiles/ms2/micons/red-dot.png",
+        scaledSize: new google.maps.Size(4, 4),
+      }
+    });
   } catch (err) {
     console.error("Error fetching population points:", err);
   }
@@ -229,3 +235,10 @@ document.getElementById("popThreshold-submit").addEventListener("click", async f
     hideSpinner();
   }
 });
+
+document.getElementById("popThreshold-clear").addEventListener("click", function () {
+  if (window.populationLayer) {
+    window.populationLayer.setMap(null);  // remove old layer
+  }
+  document.getElementById("popThreshold-input").value = "";
+})
