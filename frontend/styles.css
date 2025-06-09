@@ -32,7 +32,7 @@ body {
 .sidebar-window {
   position: absolute;
   top: 1%;
-  right: 120px;
+  right: 150px;
   width: 350px;
   background: white;
   border: 1px solid #ccc;
@@ -47,6 +47,10 @@ body {
 .settings-label {
     /* Fixed size for labels, that way the text inputs are aligned top to bottom */
     width: 140px;
+}
+
+.settings-input {
+  margin-left: 5px;
 }
 
 #loading-spinner {

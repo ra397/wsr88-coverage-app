@@ -187,3 +187,16 @@ function getCheckedElevationAngles() {
               .filter(cb => cb.checked)
               .map(cb => parseFloat(cb.value));
 }
+
+document.getElementById("popThreshold-submit").addEventListener("click", function () {
+  const input = document.getElementById("popThreshold-input");
+  const value = parseInt(input.value, 10);
+
+  if (isNaN(value) || value < 0 || value > 100000) {
+    alert("Please enter a population threshold between 0 and 100,000.");
+    return;
+  }
+
+  // ✅ Do something with the value (e.g. send to backend, trigger a map update, etc.)
+  console.log("Population threshold submitted:", value);
+});
