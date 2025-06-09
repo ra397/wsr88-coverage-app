@@ -188,7 +188,10 @@ function getCheckedElevationAngles() {
               .map(cb => parseFloat(cb.value));
 }
 
-document.getElementById("popThreshold-submit").addEventListener("click", function () {
+document.getElementById("popThreshold-submit").addEventListener("click", async function () {
+  isLoading = true;
+  showSpinner();
+
   const input = document.getElementById("popThreshold-input");
   const value = parseInt(input.value, 10);
 
@@ -197,6 +200,32 @@ document.getElementById("popThreshold-submit").addEventListener("click", functio
     return;
   }
 
-  // ✅ Do something with the value (e.g. send to backend, trigger a map update, etc.)
-  console.log("Population threshold submitted:", value);
+  try {
+    const response = await fetch("http://localhost:8000/population_points", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ population_threshold: value }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch population points.");
+    }
+
+    const geojson = await response.json();
+
+    if (window.populationLayer) {
+      window.populationLayer.setMap(null);  // remove old layer
+    }
+
+    window.populationLayer = new google.maps.Data();
+    window.populationLayer.addGeoJson(geojson);
+    window.populationLayer.setMap(map);
+
+  } catch (err) {
+    console.error("Error fetching population points:", err);
+  }
+  finally {
+    isLoading = false;
+    hideSpinner();
+  }
 });

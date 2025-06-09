@@ -1,10 +1,14 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, JSONResponse
 from processor import calculate_coverage
+from population.calculate_pop_points import calculate_pop_points
 import io
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Optional
+
+# For debugging purposes
+import traceback
 
 app = FastAPI()
 
@@ -39,4 +43,24 @@ def calculate_blockage(req: CoverageRequest):
         return StreamingResponse(img_buf, media_type="image/png")
 
     except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/population_points")
+async def get_population_points(request: Request):
+    try:
+        body = await request.json()
+        threshold = body.get("population_threshold")
+
+        if threshold is None or not (0 <= threshold <= 100000):
+            raise HTTPException(status_code=400, detail="Invalid population threshold")
+
+        geojson_result = calculate_pop_points(
+            population_threshold=threshold
+        )
+
+        return JSONResponse(content=geojson_result)
+
+    except Exception as e:
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
