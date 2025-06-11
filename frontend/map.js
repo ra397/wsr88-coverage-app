@@ -214,19 +214,27 @@ document.getElementById("popThreshold-submit").addEventListener("click", async f
     const geojson = await response.json();
 
     if (window.populationLayer) {
-      window.populationLayer.setMap(null);  // remove old layer
+      window.populationLayer.hide();
     }
 
-    window.populationLayer = new google.maps.Data();
-    window.populationLayer.addGeoJson(geojson);
-    window.populationLayer.setMap(map);
+    const populationLayer = new markerCollection(map);
 
-    window.populationLayer.setStyle({
-      icon: {
-        url: "https://maps.gstatic.com/mapfiles/ms2/micons/red-dot.png",
-        scaledSize: new google.maps.Size(4, 4),
+    await populationLayer.init({
+      marker_options: {
+        markerFill: "red",
+        markerStroke: "red",
+        markerSize: 3.5
       }
     });
+
+    geojson.features.forEach(f => {
+      const [lng, lat] = f.geometry.coordinates;
+      populationLayer.makeMarker(lat, lng);
+    });
+
+    window.populationLayer = populationLayer;
+    window.populationLayer.show();
+
   } catch (err) {
     console.error("Error fetching population points:", err);
   }
@@ -238,7 +246,7 @@ document.getElementById("popThreshold-submit").addEventListener("click", async f
 
 document.getElementById("popThreshold-clear").addEventListener("click", function () {
   if (window.populationLayer) {
-    window.populationLayer.setMap(null);  // remove old layer
+    window.populationLayer.hide();
   }
   document.getElementById("popThreshold-input").value = "";
 })
