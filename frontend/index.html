@@ -9,6 +9,10 @@
         <!-- Proj4js for reprojection -->
         <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.8.1/proj4.js"></script>
 
+        <!-- PBF -->
+        <script src="https://unpkg.com/pbf@3.0.5/dist/pbf.js"></script>
+        <script src="https://unpkg.com/geobuf@3.0.1/dist/geobuf.js"></script>
+        
         <!-- Google Maps API -->
         <script
             src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCTYZ2ogy4XY8GmiIpiw89OpE9iRk5MnxM&callback=initMap&libraries=marker"
@@ -21,6 +25,7 @@
         <div class="sidebar">
             <button class="sidebar-btn" onclick="toggleWindow('radar-settings')">Radar Settings</button>
             <button class="sidebar-btn" onclick="toggleWindow('population-settings')">Population Settings</button>
+            <button class="sidebar-btn" onclick="toggleWindow('usgs-settings')">USGS Settings</button>
             <button class="sidebar-btn" onclick="toggleWindow('information')">Information</button>
         </div>
 
@@ -77,6 +82,14 @@
                 <input type="number" id="popThreshold-input" class="settings-input" min="0" max="100000" step="1" required>
                 <button id="popThreshold-submit" class="settings-input">Enter</button>
                 <button id="popThreshold-clear" class="settings-input">Clear</button>
+            </div>
+        </div>
+
+        <div id="usgs-settings" class="sidebar-window">
+            <h3>USGS Settings</h3>
+
+            <div class="settings-input-container">
+                <input type="checkbox" id="usgsSites-checkbox"><span>USGS Sites</span>
             </div>
         </div>
 

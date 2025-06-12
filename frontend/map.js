@@ -1,5 +1,7 @@
 let map;
 
+let usgsSitesLayer;
+
 let isLoading = false;
 
 // Define EPSG:5070 (NAD83 / CONUS Albers Equal Area)
@@ -18,7 +20,7 @@ function getBoundsFromCenter(lat, lng, halfHeightDeg, halfWidthDeg) {
   };
 }
 
-function initMap() {
+async function initMap() {
   const centerUSA = { lat: 39.5, lng: -98.35 };
 
   // Initialize the map
@@ -35,6 +37,19 @@ function initMap() {
       }
     ]
   });
+
+  // Load in the USGS sites layer
+  usgsSitesLayer = new markerCollection(map);
+  usgsSitesLayer.reactClick = usgsSiteClicked;
+  await usgsSitesLayer.init({
+    marker_options: {
+      markerFill: "green",
+      markerStroke: "green",
+      markerSize: 3.5
+    }
+  });
+  const usgsPbfUrl = "https://ifis.iowafloodcenter.org/ciroh/assets/uid_markers.pbf";
+  loadUsgsSites(usgsSitesLayer, usgsPbfUrl);
 
   // Event handler when user clicks on a point in the map
   map.addListener("click", (e) => {
@@ -85,8 +100,6 @@ async function sendRadarRequest(easting, northing, maxAlt = null, towerHeight = 
 
     const angles = getCheckedElevationAngles();
     if (angles.length > 0) payload.elevation_angles = angles;
-
-    console.log("Request sent: ", payload);
 
     const response = await fetch("http://localhost:8000/calculate_blockage", {
       method: "POST",
@@ -250,3 +263,52 @@ document.getElementById("popThreshold-clear").addEventListener("click", function
   }
   document.getElementById("popThreshold-input").value = "";
 })
+
+document.getElementById("usgsSites-checkbox").addEventListener("change", function () {
+  if (this.checked) {
+    usgsSitesLayer.show();
+  } else {
+    usgsSitesLayer.hide();
+  }
+});
+
+function getArrayBuffer(url) {
+    return fetch(url).then(response => response.arrayBuffer());
+}
+
+function loadUsgsSites(target, src) {
+    getArrayBuffer(src).then((ret) => {
+        const pbf = new Pbf(ret);
+        const geojson = geobuf.decode(pbf);  // Converts to GeoJSON
+
+        for (let i = 0; i < geojson.features.length; i++) {
+            const f = geojson.features[i];
+            const c = f.geometry.coordinates;
+
+            // Skip small basins
+            if (1 * f.properties.drainage_area < 100) continue;
+
+            target.makeMarker(
+                c[1], // latitude
+                c[0], // longitude
+                {
+                    properties: f.properties,
+                    clickable: true,
+                    optimized: true
+                },
+                {
+                    clickable: true,
+                    mouseOver: false,
+                    mouseOut: false
+                }
+            );
+        }
+
+        target.hide(); // Do not show initially
+    });
+}
+
+function usgsSiteClicked(event, marker) {
+  const props = marker.properties || marker.content?.dataset || {};
+  const usgsId = props.usgs_id;
+}
