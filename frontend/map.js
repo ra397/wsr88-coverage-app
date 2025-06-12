@@ -312,7 +312,8 @@ function loadUsgsSites(target, src) {
 function usgsSiteClicked(event, marker) {
   const props = marker.properties || marker.content?.dataset || {};
   const usgsId = props.usgs_id;
-  showLabel(marker, usgsId);
+  const area = props.drainage_area;
+  showLabel(marker, usgsId, area);
   loadBasin(usgsId);
 }
 
@@ -342,20 +343,20 @@ async function loadBasin(usgsId) {
   }
 }
 
-function createLabel(val, use_class = 'arrow_rht_box') {
+function createLabel(site_id, area, use_class = 'arrow_rht_box') {
     const div = document.createElement('div');
     div.classList.add(use_class);
     div.setAttribute('style', 'position:absolute; will-change: left, top;');
-    div.innerText = val;
+    div.innerHTML = `${site_id}<br>Area: ${area.toFixed(1)} km²`;
     return div;
 }
 
-function showLabel(marker, site_id) {
-  // if label is already showing, do nothing
-  if (marker.customLabel && marker.customLabel.remove) {
-      return;
-  }
-  const labelDiv = createLabel(site_id, 'arrow_rht_box');
-  const label = new infoTool(marker.getMap(), marker.getPosition(), labelDiv);
-  marker.customLabel = label;
+function showLabel(marker, site_id, area) {
+    // If label is already showing, do nothing
+    if (marker.customLabel && marker.customLabel.remove) {
+        return;
+    }
+    const labelDiv = createLabel(site_id, area, 'arrow_rht_box');
+    const label = new infoTool(marker.getMap(), marker.getPosition(), labelDiv);
+    marker.customLabel = label;
 }
