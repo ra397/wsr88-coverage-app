@@ -1,6 +1,7 @@
 let map;
 
 let usgsSitesLayer;
+const usgsBasinLayers = {}; // Each basin boundary is its own Data layer
 
 let isLoading = false;
 
@@ -48,8 +49,8 @@ async function initMap() {
       markerSize: 3.5
     }
   });
-  const usgsPbfUrl = "https://ifis.iowafloodcenter.org/ciroh/assets/uid_markers.pbf";
-  loadUsgsSites(usgsSitesLayer, usgsPbfUrl);
+  const usgsSitesURL = "https://ifis.iowafloodcenter.org/ciroh/assets/uid_markers.pbf";
+  loadUsgsSites(usgsSitesLayer, usgsSitesURL);
 
   // Event handler when user clicks on a point in the map
   map.addListener("click", (e) => {
@@ -311,4 +312,34 @@ function loadUsgsSites(target, src) {
 function usgsSiteClicked(event, marker) {
   const props = marker.properties || marker.content?.dataset || {};
   const usgsId = props.usgs_id;
+  loadBasin(usgsId);
+}
+
+
+async function loadBasin(usgsId) {
+  // If this basin is already displayed, remove it
+  if (usgsBasinLayers[usgsId]) {
+    usgsBasinLayers[usgsId].setMap(null);
+    delete usgsBasinLayers[usgsId];
+    return;
+  }
+
+  // Otherwise, fetch and show it
+  try {
+    const buf = await getArrayBuffer(`http://localhost:8000/get_basin_boundary/${usgsId}`);
+    const geojson = geobuf.decode(new Pbf(new Uint8Array(buf)));
+
+    const layer = new google.maps.Data({ map });
+    layer.addGeoJson(geojson);
+    layer.setStyle({
+      fillColor: "white",
+      fillOpacity: 0.0,
+      strokeColor: "black",
+      strokeWeight: 1,
+    });
+
+    usgsBasinLayers[usgsId] = layer;
+  } catch (err) {
+    console.error("Error loading basin:", err);
+  }
 }

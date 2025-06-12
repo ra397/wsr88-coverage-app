@@ -26,7 +26,6 @@ class markerCollection {
 
     async getIconURL () {
         const bc = this.markerStroke, fc = this.markerFill, r = this.markerSize;
-        console.log (r, bc, fc)
         const br = 100 * 1/r, wh = 100 - 2 * br;
         const svg = `<svg stroke-width="1" fill="${fc}" stroke="${bc}" width="${(r) * 2}" height="${(r) * 2}" xmlns="http://www.w3.org/2000/svg" ><rect x="${br}%" y="${br}%"  width="${wh}%" height="${wh}%" rx="50%" ry="50%"/></svg>`;
         const use_img = new Image();

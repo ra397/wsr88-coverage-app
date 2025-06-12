@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Response
 from pydantic import BaseModel
 from fastapi.responses import StreamingResponse, JSONResponse
 from processor import calculate_coverage
@@ -6,6 +6,7 @@ from population.calculate_pop_points import calculate_pop_points
 import io
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Optional
+import httpx
 
 # For debugging purposes
 import traceback
@@ -64,3 +65,15 @@ async def get_population_points(request: Request):
     except Exception as e:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
+
+    
+@app.get("/get_basin_boundary/{usgs_id}")
+async def get_basin_boundary(usgs_id: str):
+    url = f'http://s-iihr80.iihr.uiowa.edu/_MOVE_/pbf/{usgs_id}.pbf'
+    try:
+        async with httpx.AsyncClient() as client:
+            r = await client.get(url)
+            r.raise_for_status()
+            return Response(content=r.content, media_type="application/octet-stream")
+    except httpx.HTTPError as e:
+        raise HTTPException(status_code=502, detail=f"Failed to fetch PBF: {e}")
