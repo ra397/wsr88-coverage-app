@@ -312,15 +312,13 @@ function loadUsgsSites(target, src) {
 function usgsSiteClicked(event, marker) {
   const props = marker.properties || marker.content?.dataset || {};
   const usgsId = props.usgs_id;
+  showLabel(marker, usgsId);
   loadBasin(usgsId);
 }
 
-
 async function loadBasin(usgsId) {
-  // If this basin is already displayed, remove it
+  // If this basin is already displayed, do nothing
   if (usgsBasinLayers[usgsId]) {
-    usgsBasinLayers[usgsId].setMap(null);
-    delete usgsBasinLayers[usgsId];
     return;
   }
 
@@ -342,4 +340,22 @@ async function loadBasin(usgsId) {
   } catch (err) {
     console.error("Error loading basin:", err);
   }
+}
+
+function createLabel(val, use_class = 'arrow_rht_box') {
+    const div = document.createElement('div');
+    div.classList.add(use_class);
+    div.setAttribute('style', 'position:absolute; will-change: left, top;');
+    div.innerText = val;
+    return div;
+}
+
+function showLabel(marker, site_id) {
+  // if label is already showing, do nothing
+  if (marker.customLabel && marker.customLabel.remove) {
+      return;
+  }
+  const labelDiv = createLabel(site_id, 'arrow_rht_box');
+  const label = new infoTool(marker.getMap(), marker.getPosition(), labelDiv);
+  marker.customLabel = label;
 }

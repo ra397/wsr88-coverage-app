@@ -15,8 +15,7 @@
         
         <!-- Google Maps API -->
         <script
-            src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCTYZ2ogy4XY8GmiIpiw89OpE9iRk5MnxM&callback=initMap&libraries=marker"
-            async defer>
+            src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCTYZ2ogy4XY8GmiIpiw89OpE9iRk5MnxM&libraries=marker">
         </script>
     </head>
     <body>
@@ -104,6 +103,12 @@
         </div>
 
         <script src="markerCollection.js"></script>
+        <script src="infoTool.js"></script>
         <script src="map.js"></script>
+        <script>
+            window.onload = function () {
+                initMap();
+            }
+        </script>
       </body>
 </html>
