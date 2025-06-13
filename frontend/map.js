@@ -3,6 +3,8 @@ let map;
 let usgsSitesLayer;
 const usgsBasinLayers = {}; // Each basin boundary is its own Data layer
 
+let usgsPopulationMap = {};
+
 let isLoading = false;
 
 // Define EPSG:5070 (NAD83 / CONUS Albers Equal Area)
@@ -51,6 +53,9 @@ async function initMap() {
   });
   const usgsSitesURL = "https://ifis.iowafloodcenter.org/ciroh/assets/uid_markers.pbf";
   loadUsgsSites(usgsSitesLayer, usgsSitesURL);
+
+  // Load in population data for each USGS site
+  loadUsgsPopulationMap();
 
   // Event handler when user clicks on a point in the map
   map.addListener("click", (e) => {
@@ -309,11 +314,21 @@ function loadUsgsSites(target, src) {
     });
 }
 
+function loadUsgsPopulationMap() {
+  fetch('public/data/usgs_population_map.json')
+    .then(res => res.json())
+    .then(data => {
+      usgsPopulationMap = data;
+    })
+    .catch(err => console.error('Error loading population map:', err));
+}
+
 function usgsSiteClicked(event, marker) {
   const props = marker.properties || marker.content?.dataset || {};
   const usgsId = props.usgs_id;
   const area = props.drainage_area;
-  showLabel(marker, usgsId, area);
+  const population = usgsPopulationMap?.[usgsId] ?? null;
+  showLabel(marker, usgsId, area, population);
   loadBasin(usgsId);
 }
 
@@ -343,20 +358,25 @@ async function loadBasin(usgsId) {
   }
 }
 
-function createLabel(site_id, area, use_class = 'arrow_rht_box') {
+function createLabel(site_id, area, population = null, use_class = 'arrow_rht_box') {
     const div = document.createElement('div');
     div.classList.add(use_class);
     div.setAttribute('style', 'position:absolute; will-change: left, top;');
-    div.innerHTML = `${site_id}<br>Area: ${area.toFixed(1)} km²`;
+
+    let html = `${site_id}<br>Area: ${area.toFixed(1)} km²`;
+    if (population !== null) {
+        html += `<br>Population: ${population.toLocaleString()}`;
+    }
+
+    div.innerHTML = html;
     return div;
 }
 
-function showLabel(marker, site_id, area) {
-    // If label is already showing, do nothing
+function showLabel(marker, site_id, area, population = null) {
     if (marker.customLabel && marker.customLabel.remove) {
         return;
     }
-    const labelDiv = createLabel(site_id, area, 'arrow_rht_box');
+    const labelDiv = createLabel(site_id, area, population, 'arrow_rht_box');
     const label = new infoTool(marker.getMap(), marker.getPosition(), labelDiv);
     marker.customLabel = label;
 }

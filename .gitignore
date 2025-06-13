@@ -3,7 +3,7 @@ __pycache__/
 *.pyc
 
 # Ignore frontend build artifacts
-frontend/resources/
+frontend/public/data
 
 # Ignore raster and model files
 WSR88_1D/_dem090
