@@ -40,10 +40,10 @@ def calculate_coverage(easting, northing, tower_ft=None, max_alt=3000, elevation
 
     img_buf = makePNG(combined)
 
-    
+    '''
     with open("../outputs/radar_coverage.png", "wb") as f:
         f.write(img_buf.getbuffer())
-    
+    '''
 
     return img_buf
 
