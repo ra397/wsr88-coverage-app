@@ -171,12 +171,15 @@ async function sendRadarRequest(easting, northing, maxAlt = null, towerHeight = 
       beam_model: beamModel,
     };
 
+    const unitSystem = document.getElementById("units-input").value;
+    const metersToFeet = (m) => m * 3.28084;
+
     if (maxAlt !== null) {
-      payload.max_alt = maxAlt;
+      payload.max_alt = (unitSystem === "metric") ? metersToFeet(maxAlt) : maxAlt;
     }
 
     if (towerHeight !== null) {
-      payload.tower_ft = towerHeight;
+      payload.tower_ft = (unitSystem === "metric") ? metersToFeet(towerHeight) : towerHeight;
     }
 
     const angles = getCheckedElevationAngles();
@@ -455,3 +458,25 @@ function showLabel(marker, site_id, area, population = null) {
     const label = new infoTool(marker.getMap(), marker.getPosition(), labelDiv);
     marker.customLabel = label;
 }
+
+// Update labels dynamically based on the units selected
+document.getElementById("units-input").addEventListener("change", function () {
+  const unit = this.value;
+  
+  const aglLabel = document.querySelector("label[for='aglThreshold-input']");
+  const towerLabel = document.querySelector("label[for='towerHeight-input']");
+  const aglInput = document.getElementById("aglThreshold-input");
+  const towerInput = document.getElementById("towerHeight-input");
+
+  if (unit === "metric") {
+    aglLabel.textContent = "AGL Threshold (m):";
+    towerLabel.textContent = "Tower Height (m):";
+    aglInput.placeholder = "e.g. 914.4";
+    towerInput.placeholder = "e.g. 30.48";
+  } else {
+    aglLabel.textContent = "AGL Threshold (ft):";
+    towerLabel.textContent = "Tower Height (ft):";
+    aglInput.placeholder = "e.g. 3000";
+    towerInput.placeholder = "e.g. 100";
+  }
+});

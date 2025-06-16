@@ -25,6 +25,7 @@
             <button class="sidebar-btn" onclick="toggleWindow('radar-settings')">Radar Settings</button>
             <button class="sidebar-btn" onclick="toggleWindow('population-settings')">Population Settings</button>
             <button class="sidebar-btn" onclick="toggleWindow('usgs-settings')">USGS Settings</button>
+            <button class="sidebar-btn" onclick="toggleWindow('general-settings')">General Settings</button>
             <button class="sidebar-btn" onclick="toggleWindow('information')">Information</button>
         </div>
 
@@ -89,6 +90,18 @@
 
             <div class="settings-input-container">
                 <input type="checkbox" id="usgsSites-checkbox"><span>USGS Sites</span>
+            </div>
+        </div>
+
+        <div id="general-settings" class="sidebar-window">
+            <h3>General Settings</h3>
+
+            <div class="settings-input-container">
+                <label for="units-input" class="settings-label">Units:</label>
+                <select id="units-input" class="settings-input">
+                    <option value="imperial">Imperial</option>
+                    <option value="metric">Metric</option>
+                </select>
             </div>
         </div>
 
