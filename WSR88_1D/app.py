@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, Request, Response
 from pydantic import BaseModel
 from fastapi.responses import StreamingResponse, JSONResponse
-from processor import calculate_coverage
+from processor import get_blockage
 from population.calculate_pop_points import calculate_pop_points
 import io
 from fastapi.middleware.cors import CORSMiddleware
@@ -24,26 +24,25 @@ app.add_middleware(
 class CoverageRequest(BaseModel):
     easting: float
     northing: float
-    tower_ft: float | None = None
-    max_alt: float = 3000
+    tower_m: Optional[float] = None
+    max_alt_m: Optional[float] = None
     elevation_angles: Optional[List[float]] = None
-    beam_model: str = 'radar_beam_4_3.npz'
 
 @app.post("/calculate_blockage")
 def calculate_blockage(req: CoverageRequest):
     try:
         print("Request recieved: ", req)
-        img_buf = calculate_coverage(
+        img_buf = get_blockage(
             easting=req.easting,
             northing=req.northing,
-            tower_ft=req.tower_ft,
-            max_alt=req.max_alt,
-            elevation_angles=req.elevation_angles,
-            beam_model=req.beam_model
+            elevation_angles_deg=req.elevation_angles,
+            tower_m=req.tower_m,
+            agl_threshold_m=req.max_alt_m,
         )
         return StreamingResponse(img_buf, media_type="image/png")
 
     except Exception as e:
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 

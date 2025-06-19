@@ -168,18 +168,26 @@ async function sendRadarRequest(easting, northing, maxAlt = null, towerHeight = 
     const payload = {
       easting: easting,
       northing: northing,
-      beam_model: beamModel,
     };
 
     const unitSystem = document.getElementById("units-input").value;
     const metersToFeet = (m) => m * 3.28084;
+    const feetToMeters = (m) => m / 3.28084;
 
     if (maxAlt !== null) {
-      payload.max_alt = (unitSystem === "metric") ? metersToFeet(maxAlt) : maxAlt;
+      if (unitSystem == "metric") {
+        payload.max_alt_m = maxAlt;
+      } else {
+        payload.max_alt_m = feetToMeters(maxAlt);
+      }
     }
 
     if (towerHeight !== null) {
-      payload.tower_ft = (unitSystem === "metric") ? metersToFeet(towerHeight) : towerHeight;
+      if (unitSystem == "metric") {
+        payload.tower_m = towerHeight;
+      } else {
+        payload.tower_m = feetToMeters(towerHeight);
+      }
     }
 
     const angles = getCheckedElevationAngles();

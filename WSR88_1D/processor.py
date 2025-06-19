@@ -1,51 +1,41 @@
-import json
-from common import *
-from qrtRadar import beamTracker1D, quarterRotate
-from time import time
-from math import floor
-from multiprocessing import Pool
+from calculate_blockage import combine_blockage_masks
+from calculate_blockage.constants import DEM_PATH, VCP12, window_size
+import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
+from io import BytesIO
 
-RADAR_NPZ_4_3 = r"radar_beam_4_3.npz"
-RADAR_NPZ_1_21 = r"radar_beam_1_21.npz"
-DEM_SRC = r"_dem090"
+def make_png(matrix):
+    color = [1.0, 0.0, 0.0, 0.7]  # red with 0.7 opacity
+    transparent = [0.0, 0.0, 0.0, 0.0]  # fully transparent
 
-def worker(args):
-    qr, easting, northing, tower_ft, max_alt, elevation_angles, beam_model = args
-    bt = beamTracker1D(path_beammodel=beam_model)
-    bt.dem_src = DEM_SRC
-    bt.setRadar(easting, northing, ft2m(tower_ft))
-    bt.readDEM(quarter_pref=qr)
+    fig, ax = plt.subplots(figsize=(51.12, 51.12), dpi=100)  # 51.09 * 100 = 5109 pixels
+    ax.axis("off")
+    ax.imshow(matrix, cmap=ListedColormap([transparent, color]), interpolation="nearest")
 
-    aes = elevation_angles if elevation_angles else bt.model['antenna_elevations'][:]
+    buf = BytesIO()
+    plt.savefig(buf, format="png", dpi=100, transparent=True)
+    plt.close(fig)
+    buf.seek(0)
 
-    for ae in aes:
-        bt.calcBlockage(ae, ft2m(max_alt))
-    return {qr: quarterRotate(pref=qr, data=bt.getBlockage())}
-
-def calculate_coverage(easting, northing, tower_ft=None, max_alt=3000, elevation_angles=None, beam_model=RADAR_NPZ_4_3):
-    if tower_ft is None:
-        tower_ft = m2ft(read_dem_value(DEM_SRC, easting, northing) + ft2m(100))
-    else:
-        tower_ft = m2ft(read_dem_value(DEM_SRC, easting, northing) + ft2m(tower_ft))
+    return buf
 
 
-    print("Calculating coverage with: ", easting, northing, tower_ft, max_alt, elevation_angles, beam_model)
+def get_blockage(easting, northing, elevation_angles_deg=None, tower_m=None, agl_threshold_m=None):
+    if elevation_angles_deg is None:
+        elevation_angles_deg = VCP12
+    if tower_m is None:
+        tower_m = 30.48  # default tower height in meters
+    if agl_threshold_m is None:
+        agl_threshold_m = 914.4  # default max altitude in meters (3000 ft)
 
-    total_tm = time()
-    with Pool(4) as pool:
-        results = pool.map(worker, [(qr, easting, northing, tower_ft, max_alt, elevation_angles, beam_model) for qr in QRTS])
-
-    combined = putTogether({k: v for d in results for k, v in d.items()})
-    print('Total -> ', time() - total_tm)
-
-    img_buf = makePNG(combined)
-
-    '''
-    with open("../outputs/radar_coverage.png", "wb") as f:
-        f.write(img_buf.getbuffer())
-    '''
-
+    coverage = combine_blockage_masks(
+        DEM_PATH,
+        easting,
+        northing,
+        elevation_angles_deg,
+        tower_m,
+        agl_threshold_m,
+        window_size
+    )
+    img_buf = make_png(coverage)
     return img_buf
-
-if __name__ == "__main__":
-    calculate_coverage(-724341.319300967734307, 1895659.981413539964706)
