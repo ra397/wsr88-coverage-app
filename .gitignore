@@ -6,11 +6,11 @@ __pycache__/
 frontend/public/data
 
 # Ignore raster and model files
-WSR88_1D/_dem090
-WSR88_1D/*.tif
-WSR88_1D/*.npz
-WSR88_1D/*.geojson
-WSR88_1D/population/*.tif
+backend/_dem090
+backend/*.tif
+backend/*.npz
+backend/*.geojson
+backend/population/*.tif
 
 # Ignore processor.py outputs, for testing purposes only
 outputs

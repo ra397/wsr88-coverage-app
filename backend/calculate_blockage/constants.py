@@ -7,7 +7,7 @@ if not os.path.exists("beams.npz"):
 _beams = np.load("beams.npz", mmap_mode="r")
 BEAM_CACHE = { float(k): _beams[k] for k in _beams.files }
 
-DEM_PATH = r"C:\Users\ralaya\Documents\gis\projects\wsr88-coverage-app\WSR88_1D\_dem090"
+DEM_PATH = r"C:\Users\ralaya\Documents\gis\projects\wsr88-coverage-app\backend\_dem090"
 
 VCP12 = [0.5, 0.9, 1.3, 1.8, 2.4, 3.1, 4.0, 5.1, 6.4, 8.0, 10.0, 12.5, 15.6, 19.5]
 
