@@ -27,6 +27,7 @@
             <button class="sidebar-btn" onclick="toggleWindow('usgs-settings')">USGS Settings</button>
             <button class="sidebar-btn" onclick="toggleWindow('general-settings')">General Settings</button>
             <button class="sidebar-btn" onclick="toggleWindow('information')">Information</button>
+            <button class="sidebar-btn" onclick="getPOD()">Get POD</button>
         </div>
 
         <!-- Popup window for each sidebar button, initially not visible -->
@@ -117,6 +118,9 @@
 
         <script src="markerCollection.js"></script>
         <script src="infoTool.js"></script>
+        <script src="pod.js"></script>
+        <script src="dynaImg.js"></script>
+        <script src="customOverlay.js"></script>
         <script src="map.js"></script>
         <script>
             window.onload = function () {
