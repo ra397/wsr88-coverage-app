@@ -97,3 +97,11 @@ body {
   width: 0;
   pointer-events: none;
 }
+
+#pod-range-slider-container {
+  margin-top: 40px;
+}
+
+#pod-range-slider {
+    width: 50%;
+}

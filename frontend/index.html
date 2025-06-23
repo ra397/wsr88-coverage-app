@@ -12,6 +12,10 @@
         <!-- PBF -->
         <script src="https://unpkg.com/pbf@3.0.5/dist/pbf.js"></script>
         <script src="https://unpkg.com/geobuf@3.0.1/dist/geobuf.js"></script>
+
+        <!-- noUiSlider -->
+         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nouislider@15.7.0/dist/nouislider.min.css">
+         <script src="https://cdn.jsdelivr.net/npm/nouislider@15.7.0/dist/nouislider.min.js"></script>
         
         <!-- Google Maps API -->
         <script
@@ -25,9 +29,9 @@
             <button class="sidebar-btn" onclick="toggleWindow('radar-settings')">Radar Settings</button>
             <button class="sidebar-btn" onclick="toggleWindow('population-settings')">Population Settings</button>
             <button class="sidebar-btn" onclick="toggleWindow('usgs-settings')">USGS Settings</button>
+            <button class="sidebar-btn" onclick="toggleWindow('pod-settings')">POD Settings</button>
             <button class="sidebar-btn" onclick="toggleWindow('general-settings')">General Settings</button>
             <button class="sidebar-btn" onclick="toggleWindow('information')">Information</button>
-            <button class="sidebar-btn" onclick="getPOD()">Get POD</button>
         </div>
 
         <!-- Popup window for each sidebar button, initially not visible -->
@@ -93,6 +97,70 @@
                 <input type="checkbox" id="usgsSites-checkbox"><span>USGS Sites</span>
             </div>
         </div>
+
+        <div id="pod-settings" class="sidebar-window">
+            <h3>POD Settings</h3>
+
+            <div class="settings-input-container">
+                <label for="pod-year-select" class="settings-label">Year:</label>
+                <select id="pod-year-select" class="settings-input" required>
+                    <option value="" disabled selected>Select Year</option>
+                    <option value="2017">2017</option>
+                    <option value="2018">2018</option>
+                    <option value="2019">2019</option>
+                    <option value="2020">2020</option>
+                    <option value="2021">2021</option>
+                    <option value="2022">2022</option>
+                    <option value="2023">2023</option>
+                    <option value="2024">2024</option>
+                </select>
+            </div>
+
+            <div class="settings-input-container">
+                <label for="pod-season-select" class="settings-label">Season:</label>
+                <select id="pod-season-select" class="settings-input">
+                    <option value="">All</option>
+                    <option value="Winter">Winter</option>
+                    <option value="Spring">Spring</option>
+                    <option value="Summer">Summer</option>
+                    <option value="Fall">Fall</option>
+                </select>
+            </div>
+
+            <div class="settings-input-container">
+                <label for="pod-color-count" class="settings-label">Number of Colors</label>
+                <input type="number" id="pod-color-count" class="settings-input" min="2" max="64" value="32">
+            </div>
+
+            <div class="settings-input-container" id="pod-range-slider-container">
+                <label class="settings-label">Value Range - Min/Max</label>
+                <div id="pod-range-slider"></div>
+            </div>
+
+            <div class="settings-input-container">
+                <label class="settings-label">Color Palette</label>
+                <div class="settings-input">
+                    <input type="radio" id="palette-spectral" name="palette" value="Spectral" checked>
+                    <label for="palette-spectral">Spectral</label><br>
+
+                    <input type="radio" id="palette-blues" name="palette" value="Blues">
+                    <label for="palette-blues">Blues</label><br>
+
+                    <input type="radio" id="palette-redblue" name="palette" value="Red-Blue">
+                    <label for="palette-redblue">Red-Blue</label><br>
+
+                    <input type="radio" id="palette-redgray" name="palette" value="Red-Gray">
+                    <label for="palette-redgray">Red-Gray</label>
+                </div>
+            </div>
+
+            <div class="settings-input-container">
+                <label for="pod-opacity" class="settings-label">Opacity</label>
+                <input type="range" id="pod-opacity" min="0" max="100" value="100">
+                <div><span id="pod-opacity-value">100%</span></div>
+            </div>
+        </div>
+
 
         <div id="general-settings" class="sidebar-window">
             <h3>General Settings</h3>

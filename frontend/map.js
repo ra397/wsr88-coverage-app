@@ -489,11 +489,18 @@ document.getElementById("units-input").addEventListener("change", function () {
   }
 });
 
-function getPOD() {
-  const start = new Date('2023-01-01');
-  const end   = new Date('2024-01-01');
-  showPODOverlay(start, end);
-}
+/* POD */
+
+// Holds the current POD parameters
+const podSettings = {
+  year:    null,
+  season:  'All',
+  stops:   32,
+  vmin:    0,
+  vmax:    50,
+  palette: 'Spectral',
+  opacity: 1.0
+};
 
 const MRMS_BBOX = {
   sw: { lng: -130.004187918, lat:  21.101621507 },
@@ -501,7 +508,7 @@ const MRMS_BBOX = {
 };
 
 const predef_colors = {
-    "Spectral":   [
+    Spectral:   [
         [215, 25, 28, 255], [215, 27, 29, 255], [216, 29, 31, 255], [216, 30, 32, 255], [216, 32, 33, 255], [217, 34, 34, 255], [217, 36, 36, 255], [217, 38, 37, 255], [218, 39, 38, 255], [218, 41, 39, 255], [218, 43, 41, 255], [218, 45, 42, 255], [219, 47, 43, 255], [219, 48, 45, 255], [219, 50, 46, 255], [220, 52, 47, 255], [220, 54, 48, 255], [220, 56, 50, 255], [221, 57, 51, 255], [221, 59, 52, 255], [221, 61, 53, 255], [222, 63, 55, 255], [222, 65, 56, 255], [222, 66, 57, 255], [223, 68, 59, 255], [223, 70, 60, 255], [223, 72, 61, 255], [223, 74, 62, 255], [224, 75, 64, 255], [224, 77, 65, 255], [224, 79, 66, 255], [225, 81, 67, 255], [225, 83, 69, 255], [225, 84, 70, 255], [226, 86, 71, 255], [226, 88, 73, 255], [226, 90, 74, 255], [227, 91, 75, 255], [227, 93, 76, 255], [227, 95, 78, 255], [228, 97, 79, 255], [228, 99, 80, 255], [228, 100, 81, 255], [228, 102, 83, 255], [229, 104, 84, 255], [229, 106, 85, 255], [229, 108, 87, 255], [230, 109, 88, 255], [230, 111, 89, 255], [230, 113, 90, 255], [231, 115, 92, 255], [231, 117, 93, 255], [231, 118, 94, 255], [232, 120, 95, 255], [232, 122, 97, 255], [232, 124, 98, 255], [233, 126, 99, 255], [233, 127, 101, 255], [233, 129, 102, 255], [233, 131, 103, 255], [234, 133, 104, 255], [234, 135, 106, 255], [234, 136, 107, 255], [235, 138, 108, 255], [235, 140, 110, 255], [235, 142, 111, 255], [236, 144, 112, 255], [236, 145, 113, 255], [236, 147, 115, 255], [237, 149, 116, 255], [237, 151, 117, 255], [237, 153, 118, 255], [238, 154, 120, 255], [238, 156, 121, 255], [238, 158, 122, 255], [238, 160, 124, 255], [239, 162, 125, 255], [239, 163, 126, 255], [239, 165, 127, 255], [240, 167, 129, 255], [240, 169, 130, 255], [240, 171, 131, 255], [241, 172, 132, 255], [241, 174, 134, 255], [241, 176, 135, 255], [242, 178, 136, 255], [242, 180, 138, 255], [242, 181, 139, 255], [243, 183, 140, 255], [243, 185, 141, 255], [243, 187, 143, 255], [243, 189, 144, 255], [244, 190, 145, 255], [244, 192, 146, 255], [244, 194, 148, 255], [245, 196, 149, 255], [245, 198, 150, 255], [245, 199, 152, 255], [246, 201, 153, 255], [246, 203, 154, 255], [246, 205, 155, 255], [247, 206, 157, 255], [247, 208, 158, 255], [247, 210, 159, 255], [248, 212, 160, 255], [248, 214, 162, 255], [248, 215, 163, 255], [248, 217, 164, 255], [249, 219, 166, 255], [249, 221, 167, 255], [249, 223, 168, 255], [250, 224, 169, 255], [250, 226, 171, 255], [250, 228, 172, 255], [251, 230, 173, 255], [251, 232, 174, 255], [251, 233, 176, 255], [252, 235, 177, 255], [252, 237, 178, 255], [252, 239, 180, 255], [253, 241, 181, 255], [253, 242, 182, 255], [253, 244, 183, 255], [253, 246, 185, 255], [254, 248, 186, 255], [254, 250, 187, 255], [254, 251, 188, 255], [255, 253, 190, 255], [255, 255, 191, 255], [253, 254, 191, 255], [252, 253, 191, 255], [250, 252, 191, 255], [248, 251, 191, 255], [247, 250, 191, 255], [245, 249, 191, 255], [244, 248, 191, 255], [242, 247, 191, 255], [240, 246, 191, 255], [239, 245, 191, 255], [237, 245, 191, 255], [235, 244, 191, 255], [234, 243, 190, 255], [232, 242, 190, 255], [231, 241, 190, 255], [229, 240, 190, 255], [227, 239, 190, 255], [226, 238, 190, 255], [224, 237, 190, 255], [222, 236, 190, 255], [221, 235, 190, 255], [219, 234, 190, 255], [218, 233, 190, 255], [216, 232, 190, 255], [214, 231, 190, 255], [213, 230, 190, 255], [211, 229, 190, 255], [209, 228, 190, 255], [208, 227, 190, 255], [206, 226, 190, 255], [205, 225, 190, 255], [203, 225, 190, 255], [201, 224, 190, 255], [200, 223, 190, 255], [198, 222, 190, 255], [196, 221, 190, 255], [195, 220, 190, 255], [193, 219, 189, 255], [192, 218, 189, 255], [190, 217, 189, 255], [188, 216, 189, 255], [187, 215, 189, 255], [185, 214, 189, 255], [183, 213, 189, 255], [182, 212, 189, 255], [180, 211, 189, 255], [179, 210, 189, 255], [177, 209, 189, 255], [175, 208, 189, 255], [174, 207, 189, 255], [172, 206, 189, 255], [170, 205, 189, 255], [169, 205, 189, 255], [167, 204, 189, 255], [166, 203, 189, 255], [164, 202, 189, 255], [162, 201, 189, 255], [161, 200, 189, 255], [159, 199, 189, 255], [157, 198, 189, 255], [156, 197, 189, 255], [154, 196, 189, 255], [153, 195, 189, 255], [151, 194, 188, 255], [149, 193, 188, 255], [148, 192, 188, 255], [146, 191, 188, 255], [144, 190, 188, 255], [143, 189, 188, 255], [141, 188, 188, 255], [139, 187, 188, 255], [138, 186, 188, 255], [136, 185, 188, 255], [135, 185, 188, 255], [133, 184, 188, 255], [131, 183, 188, 255], [130, 182, 188, 255], [128, 181, 188, 255], [126, 180, 188, 255], [125, 179, 188, 255], [123, 178, 188, 255], [122, 177, 188, 255], [120, 176, 188, 255], [118, 175, 188, 255], [117, 174, 188, 255], [115, 173, 188, 255], [113, 172, 188, 255], [112, 171, 188, 255], [110, 170, 187, 255], [109, 169, 187, 255], [107, 168, 187, 255], [105, 167, 187, 255], [104, 166, 187, 255], [102, 165, 187, 255], [100, 165, 187, 255], [99, 164, 187, 255], [97, 163, 187, 255], [96, 162, 187, 255], [94, 161, 187, 255], [92, 160, 187, 255], [91, 159, 187, 255], [89, 158, 187, 255], [87, 157, 187, 255], [86, 156, 187, 255], [84, 155, 187, 255], [83, 154, 187, 255], [81, 153, 187, 255], [79, 152, 187, 255], [78, 151, 187, 255], [76, 150, 187, 255], [74, 149, 187, 255], [73, 148, 187, 255], [71, 147, 187, 255], [70, 146, 186, 255], [68, 145, 186, 255], [66, 145, 186, 255], [65, 144, 186, 255], [63, 143, 186, 255], [61, 142, 186, 255], [60, 141, 186, 255], [58, 140, 186, 255], [57, 139, 186, 255], [55, 138, 186, 255], [53, 137, 186, 255], [52, 136, 186, 255], [50, 135, 186, 255]
     ].reverse(),
     Blues:      [
@@ -519,30 +526,124 @@ const predef_colors = {
     ].reverse()
 }
 
-async function showPODOverlay(startDate, endDate) {
-  // Build the hyddatapp URL
-  const pod = new POD();
-  const url = pod.getUrl(startDate, endDate);
+// Create range slider for POD layer
+const podRangeSlider = document.getElementById('pod-range-slider');
 
- // ① No need to know gridSize up front:
-  const di = new dynaImg();          
-  di.image = new Image();
-  di.image.crossOrigin = '';
+noUiSlider.create(podRangeSlider, {
+  start: [podSettings.vmin, podSettings.vmax],
+  connect: true,
+  range: { min: 0, max: 100 },
+  tooltips: [true, true],
+  format: {
+    to:   v => Math.round(v),
+    from: v => Number(v)
+  }
+});
 
-  // ② Set up your palette & range exactly as before
-  di.setColors('Spectral', predef_colors['Spectral']);
-  di.setRange(0,0.1);
-  di.setStops(32);
+let di = null;
+let podOverlay = null;
+let currentURL = null;
 
-  // ③ Load from the other team’s API—load() parses w,h,s for you:
-  const blobUrl = await di.load(url);
-
-  // ④ Then stick it over the MRMS bbox exactly the same way:
-  const overlay = customOverlay(
-    blobUrl,
-    MRMS_BBOX,
-    map,
-    'GroundOverlay'
-  );
-  overlay.setOpacity(1.0);
+// Given year and season, return start and end date for that season in that year
+function getSeasonDates(year, season) {
+  let start, end;
+  switch (season) {
+    case 'Winter': start = new Date(year,0,1);  end = new Date(year,2,31); break;
+    case 'Spring': start = new Date(year,3,1);  end = new Date(year,5,30); break;
+    case 'Summer': start = new Date(year,6,1);  end = new Date(year,8,30); break;
+    case 'Fall':   start = new Date(year,9,1);  end = new Date(year,11,31); break;
+    default:       start = new Date(year,0,1);  end = new Date(year,11,31);
+  }
+  return { start, end };
 }
+
+async function fetchAndDrawPOD() {
+  showSpinner(); isLoading = true;
+  const { start, end } = getSeasonDates(podSettings.year, podSettings.season);
+  const url = new POD().getUrl(start, end);
+
+  // If same URL, no need to fetch again
+  if (url === currentURL && di) {
+    isLoading = false;
+    hideSpinner();
+    return redrawStylingOnly();
+  }
+  currentURL = url;
+
+  // a) init dynaImg once
+  if (!di) {
+    di = new dynaImg();
+    di.image = new Image();
+    di.image.crossOrigin = '';
+  }
+
+  applyPodStylingToDynaImg();
+
+  // b) load + recolor
+  const blob = await di.load(url);
+
+  // c) swap overlay
+  if (podOverlay) podOverlay.remove();
+  podOverlay = customOverlay(blob, MRMS_BBOX, map, 'GroundOverlay');
+  podOverlay.setOpacity(podSettings.opacity);
+
+  isLoading = false; hideSpinner();
+}
+
+async function redrawStylingOnly() {
+  if (!di) return;               // nothing loaded yet
+  applyPodStylingToDynaImg();
+  const blob = await di.redraw();
+  if (podOverlay) podOverlay.setSource(blob);
+}
+
+function applyPodStylingToDynaImg() {
+  di.setStops(podSettings.stops);
+  di.setRange(podSettings.vmin / 100, podSettings.vmax / 100);
+  di.setColors(podSettings.palette, predef_colors[podSettings.palette]);
+}
+
+document.getElementById('pod-year-select')
+  .addEventListener('change', e => {
+    const y = parseInt(e.target.value, 10);
+    podSettings.year = isNaN(y) ? null : y;
+    if (podSettings.year) {
+      fetchAndDrawPOD();
+    }
+  });
+
+  document.getElementById('pod-season-select')
+  .addEventListener('change', e => {
+    podSettings.season = e.target.value || 'All';
+    if (podSettings.year) {
+      fetchAndDrawPOD();
+    }
+  });
+
+
+podRangeSlider.noUiSlider.on('update', vals => {
+  podSettings.vmin = +vals[0];
+  podSettings.vmax = +vals[1];
+});
+podRangeSlider.noUiSlider.on('set', redrawStylingOnly);
+
+document.getElementById('pod-color-count')
+  .addEventListener('change', e => {
+    podSettings.stops = +e.target.value;
+    redrawStylingOnly();
+  });
+
+document.querySelectorAll('input[name="palette"]')
+  .forEach(r => r.addEventListener('change', e => {
+    podSettings.palette = e.target.value.replace('-', '');
+    redrawStylingOnly();
+  }));
+
+const opacitySlider = document.getElementById('pod-opacity');
+const opacityLabel  = document.getElementById('pod-opacity-value');
+opacitySlider.addEventListener('input', e => {
+  const pct = +e.target.value;
+  opacityLabel.textContent = `${pct}%`;
+  podSettings.opacity = pct / 100;
+  if (podOverlay) podOverlay.setOpacity(podSettings.opacity);
+});
