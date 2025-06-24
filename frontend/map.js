@@ -647,3 +647,7 @@ opacitySlider.addEventListener('input', e => {
   podSettings.opacity = pct / 100;
   if (podOverlay) podOverlay.setOpacity(podSettings.opacity);
 });
+
+document.getElementById("clear-pod-layer").addEventListener('click', () => {
+  podOverlay.remove();
+})
