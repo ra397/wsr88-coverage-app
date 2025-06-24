@@ -7,11 +7,13 @@ import io
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Optional
 import httpx
+from profile_per_request import ResourceMonitorMiddleware
 
 # For debugging purposes
 import traceback
 
 app = FastAPI()
+app.add_middleware(ResourceMonitorMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
