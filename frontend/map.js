@@ -14,6 +14,7 @@ proj4.defs(
   "+lon_0=-96 +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs"
 );
 
+// Given a center point (lat, lng) and half-height and half-width in degrees, return the bounds
 function getBoundsFromCenter(lat, lng, halfHeightDeg, halfWidthDeg) {
   return {
     north: lat + halfHeightDeg,
@@ -158,6 +159,7 @@ async function initMap() {
   });
 }
 
+// Send a request to the backend to calculate radar coverage
 async function sendRadarRequest(easting, northing, maxAlt = null, towerHeight = null) {
   try {
     isLoading = true;
@@ -189,7 +191,7 @@ async function sendRadarRequest(easting, northing, maxAlt = null, towerHeight = 
         payload.tower_m = feetToMeters(towerHeight);
       }
     }
-
+  
     const angles = getCheckedElevationAngles();
     if (angles.length > 0) payload.elevation_angles = angles;
 
@@ -250,6 +252,7 @@ async function sendRadarRequest(easting, northing, maxAlt = null, towerHeight = 
   }
 }
 
+// Toggle the visibility of a sidebar window
 function toggleWindow(id) {
   // Close other windows
   document.querySelectorAll('.sidebar-window').forEach(w => {
@@ -293,6 +296,7 @@ function getCheckedElevationAngles() {
               .map(cb => parseFloat(cb.value));
 }
 
+// Event listener for the AGL threshold input
 document.getElementById("popThreshold-submit").addEventListener("click", async function () {
   isLoading = true;
   showSpinner();
@@ -305,6 +309,7 @@ document.getElementById("popThreshold-submit").addEventListener("click", async f
     return;
   }
 
+  // Send a request to the backend to fetch population points
   try {
     const response = await fetch("http://localhost:8000/population_points", {
       method: "POST",
@@ -368,6 +373,7 @@ function getArrayBuffer(url) {
     return fetch(url).then(response => response.arrayBuffer());
 }
 
+// Load USGS sites from a GeoJSON PBF file
 function loadUsgsSites(target, src) {
     getArrayBuffer(src).then((ret) => {
         const pbf = new Pbf(ret);
@@ -395,11 +401,11 @@ function loadUsgsSites(target, src) {
                 }
             );
         }
-
         target.hide(); // Do not show initially
     });
 }
 
+// Load the USGS population map with maps of USGS site IDs to population counts
 function loadUsgsPopulationMap() {
   fetch('public/data/usgs_population_map.json')
     .then(res => res.json())
@@ -409,6 +415,8 @@ function loadUsgsPopulationMap() {
     .catch(err => console.error('Error loading population map:', err));
 }
 
+// Event handler for when a USGS site marker is clicked
+// Displays a label with the USGS site ID, drainage area, and population and loads the basin boundary
 function usgsSiteClicked(event, marker) {
   const props = marker.properties || marker.content?.dataset || {};
   const usgsId = props.usgs_id;
@@ -418,6 +426,7 @@ function usgsSiteClicked(event, marker) {
   loadBasin(usgsId);
 }
 
+// Load the basin boundary for a given USGS site ID
 async function loadBasin(usgsId) {
   // If this basin is already displayed, do nothing
   if (usgsBasinLayers[usgsId]) {
@@ -444,6 +453,7 @@ async function loadBasin(usgsId) {
   }
 }
 
+// Create a label element with the site ID, area, and optional population
 function createLabel(site_id, area, population = null, use_class = 'arrow_rht_box') {
     const div = document.createElement('div');
     div.classList.add(use_class);
@@ -458,6 +468,7 @@ function createLabel(site_id, area, population = null, use_class = 'arrow_rht_bo
     return div;
 }
 
+// Show a label for a marker with the site ID, area, and optional population
 function showLabel(marker, site_id, area, population = null) {
     if (marker.customLabel && marker.customLabel.remove) {
         return;
@@ -467,7 +478,7 @@ function showLabel(marker, site_id, area, population = null) {
     marker.customLabel = label;
 }
 
-// Update labels dynamically based on the units selected
+// Updates labels in radar settings menu based on selected units
 document.getElementById("units-input").addEventListener("change", function () {
   const unit = this.value;
   
@@ -570,7 +581,6 @@ async function fetchAndDrawPOD() {
   }
   currentURL = url;
 
-  // a) init dynaImg once
   if (!di) {
     di = new dynaImg();
     di.image = new Image();
@@ -579,10 +589,8 @@ async function fetchAndDrawPOD() {
 
   applyPodStylingToDynaImg();
 
-  // b) load + recolor
   const blob = await di.load(url);
 
-  // c) swap overlay
   if (podOverlay) podOverlay.remove();
   podOverlay = customOverlay(blob, MRMS_BBOX, map, 'GroundOverlay');
   podOverlay.setOpacity(podSettings.opacity);
