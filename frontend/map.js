@@ -130,6 +130,7 @@ async function initMap() {
   const usgsSitesURL = "https://ifis.iowafloodcenter.org/ciroh/assets/uid_markers.pbf";
   loadUsgsSites(usgsSitesLayer, usgsSitesURL);
 
+  loadPopData();
   // Load in population data for each USGS site
   loadUsgsPopulationMap();
 
@@ -295,71 +296,6 @@ function getCheckedElevationAngles() {
               .filter(cb => cb.checked)
               .map(cb => parseFloat(cb.value));
 }
-
-// Event listener for the AGL threshold input
-document.getElementById("popThreshold-submit").addEventListener("click", async function () {
-  isLoading = true;
-  showSpinner();
-
-  const input = document.getElementById("popThreshold-input");
-  const value = parseInt(input.value, 10);
-
-  if (isNaN(value) || value < 0 || value > 100000) {
-    alert("Please enter a population threshold between 0 and 100,000.");
-    return;
-  }
-
-  // Send a request to the backend to fetch population points
-  try {
-    const response = await fetch("http://localhost:8000/population_points", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ population_threshold: value }),
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to fetch population points.");
-    }
-
-    const geojson = await response.json();
-
-    if (window.populationLayer) {
-      window.populationLayer.hide();
-    }
-
-    const populationLayer = new markerCollection(map);
-
-    await populationLayer.init({
-      marker_options: {
-        markerFill: "red",
-        markerStroke: "red",
-        markerSize: 3.5
-      }
-    });
-
-    geojson.features.forEach(f => {
-      const [lng, lat] = f.geometry.coordinates;
-      populationLayer.makeMarker(lat, lng);
-    });
-
-    window.populationLayer = populationLayer;
-    window.populationLayer.show();
-
-  } catch (err) {
-    console.error("Error fetching population points:", err);
-  }
-  finally {
-    isLoading = false;
-    hideSpinner();
-  }
-});
-
-document.getElementById("popThreshold-clear").addEventListener("click", function () {
-  if (window.populationLayer) {
-    window.populationLayer.hide();
-  }
-  document.getElementById("popThreshold-input").value = "";
-})
 
 document.getElementById("usgsSites-checkbox").addEventListener("change", function () {
   if (this.checked) {
@@ -659,3 +595,90 @@ opacitySlider.addEventListener('input', e => {
 document.getElementById("clear-pod-layer").addEventListener('click', () => {
   podOverlay.remove();
 })
+
+document.getElementById("popThreshold-slider").addEventListener('input', e => {
+  const threshold = +e.target.value;
+  document.getElementById("popThreshold-value").textContent = threshold.toLocaleString();
+  drawPopThreshold(threshold);
+});
+
+let popRaster = [];
+let popMeta = {};
+let popImageData;
+const popCanvas = document.getElementById("pop-canvas");
+const popCtx = popCanvas.getContext("2d");
+let popOverlay;
+
+function loadPopData() {
+  fetch('public/data/population_grid.json')
+  .then(res => res.json())
+  .then(data => {
+    popRaster = data.populationRaster;
+    popMeta = data.meta;
+
+    popCanvas.width = popMeta.width;
+    popCanvas.height = popMeta.height;
+    popImageData = popCtx.createImageData(popMeta.width, popMeta.height);
+
+    initPopOverlay();
+  });
+}
+
+function initPopOverlay() {
+  popOverlay = new google.maps.OverlayView();
+
+  popOverlay.onAdd = function () {
+    this.getPanes().overlayLayer.appendChild(popCanvas);
+  };
+
+  popOverlay.draw = function () {
+    const proj = this.getProjection();
+    const sw = proj.fromLatLngToDivPixel(
+      new google.maps.LatLng(popMeta.bbox.south, popMeta.bbox.west)
+    );
+    const ne = proj.fromLatLngToDivPixel(
+      new google.maps.LatLng(popMeta.bbox.north, popMeta.bbox.east)
+    );
+
+    const left = Math.floor(sw.x);
+    const top = Math.floor(ne.y);
+    const width = Math.ceil(ne.x - sw.x);
+    const height = Math.ceil(sw.y - ne.y);
+
+    popCanvas.style.left = `${left}px`;
+    popCanvas.style.top = `${top}px`;
+    popCanvas.style.width = `${width}px`;
+    popCanvas.style.height = `${height}px`;
+
+    popCanvas.width  = popMeta.width;
+    popCanvas.height = popMeta.height;
+    popImageData = popCtx.createImageData(popMeta.width, popMeta.height);
+
+    drawPopThreshold(+document.getElementById("popThreshold-slider").value);
+  };
+
+  popOverlay.setMap(map);
+}
+
+function drawPopThreshold(threshold) {
+  const width = popMeta.width;
+  const height = popMeta.height;
+
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const pop = popRaster[y][x];
+      const i = (y * width + x) * 4;
+
+      if (pop >= threshold) {
+        popImageData.data[i + 0] = 0;
+        popImageData.data[i + 1] = 0;
+        popImageData.data[i + 2] = 255;
+        popImageData.data[i + 3] = 180;
+      } else {
+        popImageData.data[i + 3] = 0;
+      }
+    }
+  }
+
+  popCtx.putImageData(popImageData, 0, 0);
+}
