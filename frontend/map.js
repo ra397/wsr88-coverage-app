@@ -784,6 +784,11 @@ radarSiteCheckbox.addEventListener('click', () => {
   if (radarSiteCheckbox.checked) {
     radarSitesLayer.show();
   } else {
+    for (const siteId in radarCoverageOverlays) {
+      const overlay = radarCoverageOverlays[siteId];
+      overlay.setMap(null);
+      delete radarCoverageOverlays[siteId];
+    }
     radarSitesLayer.hide();
   }
 });
