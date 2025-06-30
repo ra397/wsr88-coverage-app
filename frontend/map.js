@@ -140,6 +140,9 @@ async function initMap() {
       markerSize: 3.5
     }
   });
+
+  loadPopData();
+
   const usgsSitesURL = "https://ifis.iowafloodcenter.org/ciroh/assets/uid_markers.pbf";
   loadUsgsSites(usgsSitesLayer, usgsSitesURL);
 
@@ -308,71 +311,6 @@ function getCheckedElevationAngles() {
               .filter(cb => cb.checked)
               .map(cb => parseFloat(cb.value));
 }
-
-// Event listener for the AGL threshold input
-document.getElementById("popThreshold-submit").addEventListener("click", async function () {
-  isLoading = true;
-  showSpinner();
-
-  const input = document.getElementById("popThreshold-input");
-  const value = parseInt(input.value, 10);
-
-  if (isNaN(value) || value < 0 || value > 100000) {
-    alert("Please enter a population threshold between 0 and 100,000.");
-    return;
-  }
-
-  // Send a request to the backend to fetch population points
-  try {
-    const response = await fetch("http://localhost:8000/population_points", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ population_threshold: value }),
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to fetch population points.");
-    }
-
-    const geojson = await response.json();
-
-    if (window.populationLayer) {
-      window.populationLayer.hide();
-    }
-
-    const populationLayer = new markerCollection(map);
-
-    await populationLayer.init({
-      marker_options: {
-        markerFill: "red",
-        markerStroke: "red",
-        markerSize: 3.5
-      }
-    });
-
-    geojson.features.forEach(f => {
-      const [lng, lat] = f.geometry.coordinates;
-      populationLayer.makeMarker(lat, lng);
-    });
-
-    window.populationLayer = populationLayer;
-    window.populationLayer.show();
-
-  } catch (err) {
-    console.error("Error fetching population points:", err);
-  }
-  finally {
-    isLoading = false;
-    hideSpinner();
-  }
-});
-
-document.getElementById("popThreshold-clear").addEventListener("click", function () {
-  if (window.populationLayer) {
-    window.populationLayer.hide();
-  }
-  document.getElementById("popThreshold-input").value = "";
-})
 
 document.getElementById("usgsSites-checkbox").addEventListener("change", function () {
   if (this.checked) {
@@ -792,3 +730,59 @@ radarSiteCheckbox.addEventListener('click', () => {
     radarSitesLayer.hide();
   }
 });
+
+/* Population Threshold Raster */
+document.getElementById("popThreshold-slider").addEventListener('input', e => {
+  const threshold = +e.target.value;
+  document.getElementById("popThreshold-value").textContent = threshold.toLocaleString();
+  drawRaster(canvas, popData, threshold);
+});
+
+let popData = [];
+let popData_bounds;
+let threshold = 0;
+const canvas = document.getElementById("pop-canvas");
+
+function loadPopData() {
+  fetch("public/data/usa_ppp_2020_5k_epsg_3857.json")
+  .then(res => res.json())
+  .then(json => {
+    popData = json.data;
+    popData_bounds = json.bounds;
+
+    const transformer = proj4("EPSG:3857", "EPSG:4326");
+    const [west, south] = transformer.forward([popData_bounds[0], popData_bounds[1]]);
+    const [east, north] = transformer.forward([popData_bounds[2], popData_bounds[3]]);
+
+    canvas.width = popData[0].length;
+    canvas.height = popData.length;
+
+    const overlayBounds = { north, south, east, west };
+    const overlay = new CanvasOverlay(overlayBounds, canvas);
+    overlay.setMap(map);
+  });
+}
+
+function drawRaster(canvas, data, threshold) {
+  const ctx = canvas.getContext("2d");
+  const width = data[0].length;
+  const height = data.length;
+
+  const imageData = ctx.createImageData(width, height);
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const idx = (y * width + x) * 4;
+      const value = data[y][x];
+      if (value > threshold) {
+        imageData.data[idx] = 0;
+        imageData.data[idx + 1] = 0;
+        imageData.data[idx + 2] = 255;
+        imageData.data[idx + 3] = 255;
+      } else {
+        imageData.data[idx + 3] = 0;
+      }
+    }
+  }
+  ctx.putImageData(imageData, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+}
