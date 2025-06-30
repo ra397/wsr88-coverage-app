@@ -127,10 +127,12 @@ async function initMap() {
       markerSize: 3.5
     }
   });
+
+  loadPopData();
+
   const usgsSitesURL = "https://ifis.iowafloodcenter.org/ciroh/assets/uid_markers.pbf";
   loadUsgsSites(usgsSitesLayer, usgsSitesURL);
 
-  loadPopData();
   // Load in population data for each USGS site
   loadUsgsPopulationMap();
 
@@ -599,89 +601,54 @@ document.getElementById("clear-pod-layer").addEventListener('click', () => {
 document.getElementById("popThreshold-slider").addEventListener('input', e => {
   const threshold = +e.target.value;
   document.getElementById("popThreshold-value").textContent = threshold.toLocaleString();
-  drawPopThreshold(threshold);
+  drawRaster(canvas, popData, threshold);
 });
 
-let popRaster = [];
-let popMeta = {};
-let popImageData;
-const popCanvas = document.getElementById("pop-canvas");
-const popCtx = popCanvas.getContext("2d");
-let popOverlay;
+let popData = [];
+let popData_bounds;
+let threshold = 0;
+const canvas = document.getElementById("pop-canvas");
 
 function loadPopData() {
-  fetch('public/data/population_grid.json')
+  fetch("public/data/usa_ppp_2020_5k_epsg_3857.json")
   .then(res => res.json())
-  .then(data => {
-    popRaster = data.populationRaster;
-    popMeta = data.meta;
+  .then(json => {
+    popData = json.data;
+    popData_bounds = json.bounds;
 
-    popCanvas.width = popMeta.width;
-    popCanvas.height = popMeta.height;
-    popImageData = popCtx.createImageData(popMeta.width, popMeta.height);
+    const transformer = proj4("EPSG:3857", "EPSG:4326");
+    const [west, south] = transformer.forward([popData_bounds[0], popData_bounds[1]]);
+    const [east, north] = transformer.forward([popData_bounds[2], popData_bounds[3]]);
 
-    initPopOverlay();
+    canvas.width = popData[0].length;
+    canvas.height = popData.length;
+
+    const overlayBounds = { north, south, east, west };
+    const overlay = new CanvasOverlay(overlayBounds, canvas);
+    overlay.setMap(map);
   });
 }
 
-function initPopOverlay() {
-  popOverlay = new google.maps.OverlayView();
+function drawRaster(canvas, data, threshold) {
+  const ctx = canvas.getContext("2d");
+  const width = data[0].length;
+  const height = data.length;
 
-  popOverlay.onAdd = function () {
-    this.getPanes().overlayLayer.appendChild(popCanvas);
-  };
-
-  popOverlay.draw = function () {
-    const proj = this.getProjection();
-    const sw = proj.fromLatLngToDivPixel(
-      new google.maps.LatLng(popMeta.bbox.south, popMeta.bbox.west)
-    );
-    const ne = proj.fromLatLngToDivPixel(
-      new google.maps.LatLng(popMeta.bbox.north, popMeta.bbox.east)
-    );
-
-    console.log("POP Overlay draw", sw, ne);
-
-    const left = Math.floor(sw.x);
-    const top = Math.floor(ne.y);
-    const width = Math.ceil(ne.x - sw.x);
-    const height = Math.ceil(sw.y - ne.y);
-
-    popCanvas.style.left = `${left}px`;
-    popCanvas.style.top = `${top}px`;
-    popCanvas.style.width = `${width}px`;
-    popCanvas.style.height = `${height}px`;
-
-    popCanvas.width  = popMeta.width;
-    popCanvas.height = popMeta.height;
-    popImageData = popCtx.createImageData(popMeta.width, popMeta.height);
-
-    drawPopThreshold(+document.getElementById("popThreshold-slider").value);
-  };
-
-  popOverlay.setMap(map);
-}
-
-function drawPopThreshold(threshold) {
-  const width = popMeta.width;
-  const height = popMeta.height;
-
+  const imageData = ctx.createImageData(width, height);
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
-      const pop = popRaster[y][x];
-      const i = (y * width + x) * 4;
-
-      if (pop > threshold) {
-        popImageData.data[i + 0] = 0;
-        popImageData.data[i + 1] = 0;
-        popImageData.data[i + 2] = 255;
-        popImageData.data[i + 3] = 180;
+      const idx = (y * width + x) * 4;
+      const value = data[y][x];
+      if (value > threshold) {
+        imageData.data[idx] = 0;
+        imageData.data[idx + 1] = 0;
+        imageData.data[idx + 2] = 255;
+        imageData.data[idx + 3] = 255;
       } else {
-        popImageData.data[i + 3] = 0;
+        imageData.data[idx + 3] = 0;
       }
     }
   }
-
-  popCtx.putImageData(popImageData, 0, 0);
-  popCtx.imageSmoothingEnabled = false;
+  ctx.putImageData(imageData, 0, 0);
+  ctx.imageSmoothingEnabled = false;
 }

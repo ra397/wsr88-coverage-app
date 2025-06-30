@@ -25,7 +25,7 @@
     </head>
     <body>
         <div id="map"></div>
-        <canvas id="pop-canvas"></canvas>
+        <canvas id="pop-canvas" width="1393" height="594"></canvas>
 
         <div class="sidebar">
             <button class="sidebar-btn" onclick="toggleWindow('radar-settings')">Radar Settings</button>
@@ -86,8 +86,8 @@
 
             <label for="popThreshold-slider" class="settings-label">Population Threshold:</label>
             <div class="settings-input-container">
-                <input type="range" id="popThreshold-slider" min="0" max="100000" value="50000" step="1000">
-                <span id="popThreshold-value">500,000</span>
+                <input type="range" id="popThreshold-slider" min="0" max="25000" value="7500" step="25">
+                <span id="popThreshold-value">7,500</span>
             </div>
         </div>
 
@@ -194,6 +194,7 @@
         <script src="pod.js"></script>
         <script src="dynaImg.js"></script>
         <script src="customOverlay.js"></script>
+        <script src="canvasOverlay.js"></script>
         <script src="map.js"></script>
         <script>
             window.onload = function () {
