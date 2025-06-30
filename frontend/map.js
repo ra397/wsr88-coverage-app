@@ -640,6 +640,8 @@ function initPopOverlay() {
       new google.maps.LatLng(popMeta.bbox.north, popMeta.bbox.east)
     );
 
+    console.log("POP Overlay draw", sw, ne);
+
     const left = Math.floor(sw.x);
     const top = Math.floor(ne.y);
     const width = Math.ceil(ne.x - sw.x);
@@ -669,7 +671,7 @@ function drawPopThreshold(threshold) {
       const pop = popRaster[y][x];
       const i = (y * width + x) * 4;
 
-      if (pop >= threshold) {
+      if (pop > threshold) {
         popImageData.data[i + 0] = 0;
         popImageData.data[i + 1] = 0;
         popImageData.data[i + 2] = 255;
@@ -681,4 +683,5 @@ function drawPopThreshold(threshold) {
   }
 
   popCtx.putImageData(popImageData, 0, 0);
+  popCtx.imageSmoothingEnabled = false;
 }
