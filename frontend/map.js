@@ -765,7 +765,7 @@ function radarSiteClicked(event, marker) {
   };
 
   const overlay = new google.maps.GroundOverlay(
-    `/public/data/${marker.properties.siteID}.png`,
+    `/public/data/nexrad_coverages/${marker.properties.siteID}.png`,
     overlayBounds,
     { opacity: 0.7 }
   );
