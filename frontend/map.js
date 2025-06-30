@@ -1,5 +1,6 @@
 let map;
 
+let radarSitesLayer;
 let usgsSitesLayer;
 const usgsBasinLayers = {}; // Each basin boundary is its own Data layer
 
@@ -116,6 +117,18 @@ async function initMap() {
       }
     ]
   });
+
+  // Load is Radar sites layer
+  radarSitesLayer = new markerCollection(map);
+  radarSitesLayer.reactClick = radarSiteClicked;
+  await radarSitesLayer.init({
+    marker_options: {
+      markerFill: "red",
+      markerStroke: "red",
+      markerSize: 3.5
+    }
+  });
+  loadRadarSites(radarSitesLayer);
 
   // Load in the USGS sites layer
   usgsSitesLayer = new markerCollection(map);
@@ -659,3 +672,102 @@ opacitySlider.addEventListener('input', e => {
 document.getElementById("clear-pod-layer").addEventListener('click', () => {
   podOverlay.remove();
 })
+
+function loadRadarSites(target) {
+  fetch('public/data/nexrad_epsg5070.geojson')
+  .then(response => response.json())
+  .then(data => {
+    for (let i = 0; i < data.features.length; i++) {
+      const description = data.features[i].properties.description;
+      const siteData = extractSiteData(description);
+      const coords = {
+        latitude: siteData.latitude,
+        longitude: siteData.longitude
+      };
+
+      target.makeMarker(
+        coords.latitude,
+        coords.longitude,
+        {
+          properties: {
+            siteID : siteData.siteId,
+            easting: data.features[i].geometry.coordinates[0],
+            northing: data.features[i].geometry.coordinates[1],
+            elevation: siteData.elevation,
+          },
+          clickable: true,
+          optimized: true
+        },
+        {
+          clickable: true,
+          mouseOver: false,
+          mouseOut: false
+        }
+      );
+    }
+  });
+}
+
+function extractSiteData(description) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(description, 'text/html');
+  const tdElements = Array.from(doc.querySelectorAll('td'));
+
+  let siteId = null;
+  let latitude = null;
+  let longitude = null;
+  let elevation = null;
+
+  tdElements.forEach(td => {
+    const text = td.textContent.trim();
+
+    if (text.startsWith("SITE ID")) {
+      const match = text.match(/NEXRAD:([A-Z0-9]+)/);
+      if (match) siteId = match[1];
+    } else if (text.startsWith("LATITUDE")) {
+      latitude = parseFloat(text.replace("LATITUDE", "").trim());
+    } else if (text.startsWith("LONGITUDE")) {
+      longitude = parseFloat(text.replace("LONGITUDE", "").trim());
+    } else if (text.startsWith("ELEVATION")) {
+      elevation = parseFloat(text.replace("ELEVATION", "").trim());
+    }
+  });
+
+  return { siteId, latitude, longitude, elevation };
+}
+
+
+function radarSiteClicked(event, marker) {
+  console.log(`Radar Site ID: ${marker.properties.siteID}`);
+  console.log(`Easting: ${marker.properties.easting}`);
+  console.log(`Northing: ${marker.properties.northing}`);
+
+  const pixelSize = 90;         // meters per pixel
+  const matrixSize = 5112;      // pixels
+  const halfExtent = (pixelSize * matrixSize) / 2;  // = 229905 meters
+
+  const bounds5070 = {
+    west: marker.properties.easting - halfExtent,
+    east: marker.properties.easting + halfExtent,
+    south: marker.properties.northing - halfExtent,
+    north: marker.properties.northing + halfExtent,
+  };
+
+  // Convert EPSG:5070 bounds to EPSG:4326
+  const [westLng, southLat] = proj4('EPSG:5070', 'EPSG:4326', [bounds5070.west, bounds5070.south]);
+  const [eastLng, northLat] = proj4('EPSG:5070', 'EPSG:4326', [bounds5070.east, bounds5070.north]);
+
+  const overlayBounds = {
+    north: northLat,
+    south: southLat,
+    east: eastLng,
+    west: westLng,
+  };
+
+  const overlay = new google.maps.GroundOverlay(
+    `/public/data/${marker.properties.siteID}.png`,
+    overlayBounds,
+    { opacity: 0.7 }
+  );
+  overlay.setMap(map);
+}
