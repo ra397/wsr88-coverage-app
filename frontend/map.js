@@ -735,6 +735,7 @@ radarSiteCheckbox.addEventListener('click', () => {
 document.getElementById("popThreshold-slider").addEventListener('input', e => {
   const threshold = +e.target.value;
   document.getElementById("popThreshold-value").textContent = threshold.toLocaleString();
+  canvas.style.display = 'block';
   drawRaster(canvas, popData, threshold);
 });
 
@@ -786,3 +787,7 @@ function drawRaster(canvas, data, threshold) {
   ctx.putImageData(imageData, 0, 0);
   ctx.imageSmoothingEnabled = false;
 }
+
+document.getElementById("clear-pop-layer").addEventListener('click', () => {
+  canvas.style.display = 'none';
+});
