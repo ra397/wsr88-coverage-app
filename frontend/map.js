@@ -673,6 +673,9 @@ document.getElementById("clear-pod-layer").addEventListener('click', () => {
   podOverlay.remove();
 })
 
+/* Precalculated radar sites */
+const radarCoverageOverlays = {}
+
 function loadRadarSites(target) {
   fetch('public/data/nexrad_epsg5070.geojson')
   .then(response => response.json())
@@ -738,9 +741,12 @@ function extractSiteData(description) {
 
 
 function radarSiteClicked(event, marker) {
-  console.log(`Radar Site ID: ${marker.properties.siteID}`);
-  console.log(`Easting: ${marker.properties.easting}`);
-  console.log(`Northing: ${marker.properties.northing}`);
+  if (radarCoverageOverlays[marker.properties.siteID]) {
+    // If overlay already exists for this site, remove it
+    radarCoverageOverlays[marker.properties.siteID].setMap(null);
+    delete radarCoverageOverlays[marker.properties.siteID];
+    return;
+  }
 
   const pixelSize = 90;         // meters per pixel
   const matrixSize = 5112;      // pixels
@@ -770,4 +776,5 @@ function radarSiteClicked(event, marker) {
     { opacity: 0.7 }
   );
   overlay.setMap(map);
+  radarCoverageOverlays[marker.properties.siteID] = overlay;
 }
