@@ -778,3 +778,12 @@ function radarSiteClicked(event, marker) {
   overlay.setMap(map);
   radarCoverageOverlays[marker.properties.siteID] = overlay;
 }
+
+const radarSiteCheckbox = document.getElementById("radarSite-checkbox");
+radarSiteCheckbox.addEventListener('click', () => {
+  if (radarSiteCheckbox.checked) {
+    radarSitesLayer.show();
+  } else {
+    radarSitesLayer.hide();
+  }
+});
