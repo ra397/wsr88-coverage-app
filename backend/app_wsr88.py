@@ -7,7 +7,14 @@ import httpx
 from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app, resources={r"/api-wsr88/*": {"origins": "https://s-iihr80.iihr.uiowa.edu"}})
+CORS(app, resources={
+    r"/api-wsr88/*": {
+        "origins": [
+            "https://s-iihr80.iihr.uiowa.edu",
+            "http://localhost:5500"
+        ]
+    }
+})
 
 @app.route("/api-wsr88/ping", methods=['GET'])
 def api_root():
