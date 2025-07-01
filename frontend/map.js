@@ -1,4 +1,4 @@
-const server = window._env_.SERVER_URL;
+const server = window._env_prod.SERVER_URL;
 
 let map;
 let usgsSitesLayer;
@@ -143,7 +143,7 @@ async function initMap() {
 
   loadPopData();
 
-  const usgsSitesURL = window._env_.USGS_SITES_URL;
+  const usgsSitesURL = window._env_prod.USGS_SITES_URL;
   loadUsgsSites(usgsSitesLayer, usgsSitesURL);
 
   // Load in population data for each USGS site
@@ -386,7 +386,7 @@ async function loadBasin(usgsId) {
 
   // Otherwise, fetch and show it
   try {
-    const buf = await getArrayBuffer(`${window._env_.USGS_BOUNDARY_URL}${usgsId}.pbf`);
+    const buf = await getArrayBuffer(`${window._env_prod.USGS_BOUNDARY_URL}${usgsId}.pbf`);
     const geojson = geobuf.decode(new Pbf(new Uint8Array(buf)));
 
     const layer = new google.maps.Data({ map });

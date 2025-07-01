@@ -1,7 +1,7 @@
 class POD {
     constructor() {
-        this.baseUrl = window._env_.POD_URL;
-        this.port = window._env_.POD_PORT;
+        this.baseUrl = window._env_prod.POD_URL;
+        this.port = window._env_prod.POD_PORT;
         this.productName = 'pod';
     }
 
