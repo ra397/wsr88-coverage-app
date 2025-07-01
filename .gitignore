@@ -1,0 +1,16 @@
+# Ignore Python bytecode
+__pycache__/
+*.pyc
+
+# Ignore frontend build artifacts
+frontend/public/data
+
+# Ignore raster and model files
+backend/_dem090
+backend/*.tif
+backend/*.npz
+backend/*.geojson
+backend/population/*.tif
+
+# Ignore processor.py outputs, for testing purposes only
+outputs
