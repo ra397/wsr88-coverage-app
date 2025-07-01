@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>WSR88-D Coverage</title>  
+        <link rel="shortcut icon" href="//uiowa.edu/profiles/custom/sitenow/assets/favicon.ico">
+        <link rel="stylesheet" href="styles.css">
+
+        <!-- Proj4js for reprojection -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.8.1/proj4.js"></script>
+
+        <!-- PBF -->
+        <script src="https://unpkg.com/pbf@3.0.5/dist/pbf.js"></script>
+        <script src="https://unpkg.com/geobuf@3.0.1/dist/geobuf.js"></script>
+
+        <!-- noUiSlider -->
+         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nouislider@15.7.0/dist/nouislider.min.css">
+         <script src="https://cdn.jsdelivr.net/npm/nouislider@15.7.0/dist/nouislider.min.js"></script>
+        
+        <!-- Google Maps API -->
+        <script
+            src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCTYZ2ogy4XY8GmiIpiw89OpE9iRk5MnxM&libraries=marker">
+        </script>
+    </head>
+    <body>
+        <div id="map"></div>
+        <canvas id="pop-canvas" width="1393" height="594"></canvas>
+
+        <div class="sidebar">
+            <button class="sidebar-btn" onclick="toggleWindow('radar-settings')">Radar Settings</button>
+            <button class="sidebar-btn" onclick="toggleWindow('population-settings')">Population Settings</button>
+            <button class="sidebar-btn" onclick="toggleWindow('usgs-settings')">USGS Settings</button>
+            <button class="sidebar-btn" onclick="toggleWindow('pod-settings')">POD Settings</button>
+            <button class="sidebar-btn" onclick="toggleWindow('general-settings')">General Settings</button>
+            <button class="sidebar-btn" onclick="toggleWindow('information')">Information</button>
+        </div>
+
+        <!-- Popup window for each sidebar button, initially not visible -->
+        <div id="radar-settings" class="sidebar-window">
+            <h3>Radar Settings</h3>
+
+            <div class="settings-input-container">
+                <label for="radarSite-input" class="settings-label">Radar Sites</label>
+                <input type="checkbox" id="radarSite-checkbox" checked>
+                </select>
+            </div>
+
+            <div class="settings-input-container">
+                <label for="aglThreshold-input" class="settings-label">AGL Threshold (ft):</label>
+                <input type="number" id="aglThreshold-input" class="settings-input" min="0" placeholder="e.g. 3000">
+            </div>
+
+            <div class="settings-input-container">
+                <label for="towerHeight-input" class="settings-label">Tower Height (ft):</label>
+                <input type="number" id="towerHeight-input" class="settings-input" min="0" placeholder="e.g. 100">
+            </div>
+
+            <div class="settings-input-container">
+                <label class="settings-label">Elevation angle(s):</label>
+                <div class="settings-input">
+                    <div id="elevation-angle-checkboxes">
+                        <span>0.5°</span><input type="checkbox" value="0.5" checked>
+                        <span>0.9°</span><input type="checkbox" value="0.9" checked>
+                        <span>1.3°</span><input type="checkbox" value="1.3" checked>
+                        <span>1.8°</span><input type="checkbox" value="1.8" checked><br>
+                        <span>2.4°</span><input type="checkbox" value="2.4" checked>
+                        <span>3.1°</span><input type="checkbox" value="3.1" checked>
+                        <span>4.0°</span><input type="checkbox" value="4.0" checked>
+                        <span>5.1°</span><input type="checkbox" value="5.1" checked><br>
+                        <span>6.4°</span><input type="checkbox" value="6.4" checked>
+                        <span>8.0°</span><input type="checkbox" value="8.0" checked>
+                        <span>10.0°</span><input type="checkbox" value="10.0" checked><br>
+                        <span>12.5°</span><input type="checkbox" value="12.5" checked>
+                        <span>15.6°</span><input type="checkbox" value="15.6" checked>
+                        <span>19.5°</span><input type="checkbox" value="19.5" checked>
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-input-container">
+                <label for="beamModel-input" class="settings-label">Beam model:</label>
+                <select id="beamModel-input" class="settings-input">
+                    <option value="radar_beam_1_21.npz">1.21</option>
+                    <option value="radar_beam_4_3.npz">4/3</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="population-settings" class="sidebar-window">
+            <h3>Population Settings</h3>
+
+            <label for="popThreshold-slider" class="settings-label">Population Threshold:</label>
+            <div class="settings-input-container">
+                <input type="range" id="popThreshold-slider" min="0" max="25000" value="7500" step="25">
+                <span id="popThreshold-value">7,500</span>
+            </div>
+
+            <div class="settings-input-container">
+                <button id="clear-pop-layer" class="settings-input">Clear</button>
+            </div>
+        </div>
+
+        <div id="usgs-settings" class="sidebar-window">
+            <h3>USGS Settings</h3>
+
+            <div class="settings-input-container">
+                <input type="checkbox" id="usgsSites-checkbox"><span>USGS Sites</span>
+            </div>
+        </div>
+
+        <div id="pod-settings" class="sidebar-window">
+            <h3>POD Settings</h3>
+
+            <div class="settings-input-container">
+                <label for="pod-year-select" class="settings-label">Year:</label>
+                <select id="pod-year-select" class="settings-input" required>
+                    <option value="" disabled selected>Select Year</option>
+                    <option value="2017">2017</option>
+                    <option value="2018">2018</option>
+                    <option value="2019">2019</option>
+                    <option value="2020">2020</option>
+                    <option value="2021">2021</option>
+                    <option value="2022">2022</option>
+                    <option value="2023">2023</option>
+                    <option value="2024">2024</option>
+                </select>
+            </div>
+
+            <div class="settings-input-container">
+                <label for="pod-season-select" class="settings-label">Season:</label>
+                <select id="pod-season-select" class="settings-input">
+                    <option value="">All</option>
+                    <option value="Winter">Winter</option>
+                    <option value="Spring">Spring</option>
+                    <option value="Summer">Summer</option>
+                    <option value="Fall">Fall</option>
+                </select>
+            </div>
+
+            <div class="settings-input-container">
+                <label for="pod-color-count" class="settings-label">Number of Colors</label>
+                <input type="number" id="pod-color-count" class="settings-input" min="2" max="64" value="32">
+            </div>
+
+            <div class="settings-input-container" id="pod-range-slider-container">
+                <label class="settings-label">Value Range - Min/Max</label>
+                <div id="pod-range-slider"></div>
+            </div>
+
+            <div class="settings-input-container">
+                <label class="settings-label">Color Palette</label>
+                <div class="settings-input">
+                    <input type="radio" id="palette-spectral" name="palette" value="Spectral" checked>
+                    <label for="palette-spectral">Spectral</label><br>
+
+                    <input type="radio" id="palette-blues" name="palette" value="Blues">
+                    <label for="palette-blues">Blues</label><br>
+
+                    <input type="radio" id="palette-redblue" name="palette" value="Red-Blue">
+                    <label for="palette-redblue">Red-Blue</label><br>
+
+                    <input type="radio" id="palette-redgray" name="palette" value="Red-Gray">
+                    <label for="palette-redgray">Red-Gray</label>
+                </div>
+            </div>
+
+            <div class="settings-input-container">
+                <label for="pod-opacity" class="settings-label">Opacity</label>
+                <input type="range" id="pod-opacity" min="0" max="100" value="100">
+                <div><span id="pod-opacity-value">100%</span></div>
+            </div>
+
+            <div class="settings-input-container">
+                <label for="clear-pod-layer" class="settings-label"></label>
+                <button id="clear-pod-layer" class="settings-input">Clear</button>
+            </div>
+        </div>
+
+        <div id="general-settings" class="sidebar-window">
+            <h3>General Settings</h3>
+
+            <div class="settings-input-container">
+                <label for="units-input" class="settings-label">Units:</label>
+                <select id="units-input" class="settings-input">
+                    <option value="imperial">Imperial</option>
+                    <option value="metric">Metric</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="information" class="sidebar-window">
+            <h3>Information</h3>
+        </div>
+
+
+        <!-- Loading spinner, shown after request is sent and before coverage loads on map -->
+         <div id="loading-spinner" style="display: none;">
+            <div class="spinner"></div>
+        </div>
+
+        <script src="markerCollection.js"></script>
+        <script src="infoTool.js"></script>
+        <script src="pod.js"></script>
+        <script src="dynaImg.js"></script>
+        <script src="customOverlay.js"></script>
+        <script src="canvasOverlay.js"></script>
+        <script src="map.js"></script>
+        <script>
+            window.onload = function () {
+                initMap();
+            }
+        </script>
+      </body>
+</html>

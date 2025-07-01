@@ -1,0 +1,111 @@
+body {
+    /* Disallow scroll wheel*/
+    overflow: hidden;
+}
+
+#map {
+    width: 100vw;
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+}
+
+.sidebar {
+  /* Display on the right side of the map */
+  position: absolute;
+  right: 10px;
+  top: 1%;
+
+  /* Display vertically */
+  display: flex;
+  flex-direction: column;
+
+  background: white;
+  border: 1px solid #ccc;
+}
+
+.sidebar-btn {
+    /* Space out each button */
+    margin: 1px;
+}
+
+.sidebar-window {
+  position: absolute;
+  top: 1%;
+  right: 150px;
+  width: 350px;
+  background: white;
+  border: 1px solid #ccc;
+  display: none;
+}
+
+.settings-input-container {
+    display: flex;
+    margin-bottom: 3px;
+}
+
+.settings-label {
+    /* Fixed size for labels, that way the text inputs are aligned top to bottom */
+    width: 140px;
+}
+
+.settings-input {
+  margin-left: 5px;
+}
+
+#loading-spinner {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2000;
+}
+
+.spinner {
+  border: 8px solid #f3f3f3;
+  border-top: 8px solid #3498db;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.arrow_rht_box {
+  position: absolute;
+  background-color: whitesmoke;
+  border: 1px solid #000;
+  font-size: 14px;
+  padding: 0 0.2em 0 0.2em;
+  z-index: 998;
+  line-height: 1.5em;
+  transform: translate(calc(-100% - 11px), -50%);
+}
+
+.arrow_rht_box:before {
+  content: "";
+  position: absolute;
+  left: 100%;
+  border: solid transparent;
+  border-width: 0.75em;
+  border-left-color: #006400;
+  height: 0;
+  width: 0;
+  pointer-events: none;
+}
+
+#pod-range-slider-container {
+  margin-top: 40px;
+}
+
+#pod-range-slider {
+    width: 50%;
+}
+
+#popThreshold-slider {
+  width: 100%;
+}
