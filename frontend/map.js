@@ -1,4 +1,4 @@
-const server = "https://s-iihr80.iihr.uiowa.edu/api-wsr88";
+const server = window._env_.SERVER_URL;
 
 let map;
 let usgsSitesLayer;
@@ -143,7 +143,7 @@ async function initMap() {
 
   loadPopData();
 
-  const usgsSitesURL = "https://ifis.iowafloodcenter.org/ciroh/assets/uid_markers.pbf";
+  const usgsSitesURL = window._env_.USGS_SITES_URL;
   loadUsgsSites(usgsSitesLayer, usgsSitesURL);
 
   // Load in population data for each USGS site
@@ -386,7 +386,7 @@ async function loadBasin(usgsId) {
 
   // Otherwise, fetch and show it
   try {
-    const buf = await getArrayBuffer(`https://s-iihr80.iihr.uiowa.edu/_MOVE_/pbf/${usgsId}.pbf`);
+    const buf = await getArrayBuffer(`${window._env_.USGS_BOUNDARY_URL}${usgsId}.pbf`);
     const geojson = geobuf.decode(new Pbf(new Uint8Array(buf)));
 
     const layer = new google.maps.Data({ map });

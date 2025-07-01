@@ -1,7 +1,7 @@
 class POD {
     constructor() {
-        this.baseUrl = `https://s-iihr80.iihr.uiowa.edu`
-        this.port = 8081;
+        this.baseUrl = window._env_.POD_URL;
+        this.port = window._env_.POD_PORT;
         this.productName = 'pod';
     }
 
