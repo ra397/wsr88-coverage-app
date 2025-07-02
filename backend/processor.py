@@ -9,7 +9,7 @@ def make_png(matrix):
     color = [1.0, 0.0, 0.0, 0.7]  # red with 0.7 opacity
     transparent = [0.0, 0.0, 0.0, 0.0]  # fully transparent
 
-    fig, ax = plt.subplots(figsize=(51.12, 51.12), dpi=100)  # 51.09 * 100 = 5109 pixels
+    fig, ax = plt.subplots(figsize=(window_size / 100.0, window_size / 100.0), dpi=100)
     ax.axis("off")
     ax.imshow(matrix, cmap=ListedColormap([transparent, color]), interpolation="nearest")
 
