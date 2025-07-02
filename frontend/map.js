@@ -9,10 +9,9 @@ let usgsPopulationMap = {};
 let isLoading = false;
 
 // Define EPSG:5070 (NAD83 / CONUS Albers Equal Area)
-proj4.defs(
-  "EPSG:5070",
-  "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 " +
-  "+lon_0=-96 +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs"
+proj4.defs("EPSG:3857",
+  "+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 " +
+  "+datum=WGS84 +units=m +no_defs"
 );
 
 // Given a center point (lat, lng) and half-height and half-width in degrees, return the bounds
@@ -154,12 +153,12 @@ async function initMap() {
     // Do not allow user to click on map if a request is being processed
     if (isLoading) return;
 
-    // Get the lat and lon coordinates of the point that was clicked
+    // Get the lat and lon coordinates of the point that was clicked (epsg:4326)
     const lat = e.latLng.lat();
     const lng = e.latLng.lng();
 
-    // Convert to epsg:5070 
-    const [x5070, y5070] = proj4('EPSG:4326', 'EPSG:5070', [lng, lat]);
+    // Convert to epsg:3857
+    const [x3857, y3857] = proj4('EPSG:4326', 'EPSG:3857', [lng, lat]);
 
     // Get AGL Threshold input
     const maxAlt = getInput(document.getElementById("aglThreshold-input"));
@@ -171,7 +170,7 @@ async function initMap() {
     if (document.getElementById("towerHeight-input").value && towerHeight === null) return;
 
     // Send request to backend
-    sendRadarRequest(x5070, y5070, maxAlt, towerHeight);
+    sendRadarRequest(x3857, y3857, maxAlt, towerHeight);
   });
 }
 
@@ -225,24 +224,21 @@ async function sendRadarRequest(easting, northing, maxAlt = null, towerHeight = 
 
     
     const blob = await response.blob();
+    console.log(blob);
     const imageUrl = URL.createObjectURL(blob);
 
-    // Image metadata
-    const pixelSize = 90;         // meters per pixel
-    const matrixSize = 5112;      // pixels
-    const halfExtent = (pixelSize * matrixSize) / 2;  // = 229905 meters
+    const pixelSize = 114
+    const matrixSize = 4028
+    const halfExtent = (pixelSize * matrixSize) / 2;
 
-    // EPSG:5070 bounds
-    const bounds5070 = {
+    const bounds3857 = {
       west: easting - halfExtent,
       east: easting + halfExtent,
       south: northing - halfExtent,
-      north: northing + halfExtent,
+      north: northing + halfExtent
     };
-
-    // Convert EPSG:5070 bounds to EPSG:4326
-    const [westLng, southLat] = proj4('EPSG:5070', 'EPSG:4326', [bounds5070.west, bounds5070.south]);
-    const [eastLng, northLat] = proj4('EPSG:5070', 'EPSG:4326', [bounds5070.east, bounds5070.north]);
+    const [westLng, southLat] = proj4('EPSG:3857', 'EPSG:4326', [bounds3857.west, bounds3857.south]);
+    const [eastLng, northLat] = proj4('EPSG:3857', 'EPSG:4326', [bounds3857.east, bounds3857.north]);
 
     const overlayBounds = {
       north: northLat,
@@ -251,14 +247,12 @@ async function sendRadarRequest(easting, northing, maxAlt = null, towerHeight = 
       west: westLng,
     };
 
-    // Add image as a GroundOverlay
-    const overlay = new google.maps.GroundOverlay(
-      imageUrl,
-      overlayBounds,
-      { opacity: 0.7 }
-    );
+    const overlay = new google.maps.GroundOverlay(imageUrl, overlayBounds, { 
+      opacity: 0.7,
+      clickable: false,
+    });
     overlay.setMap(map);
-  } 
+  }
   catch (err) {
     console.log("Error fetching radar coverage: ", err);
   }
