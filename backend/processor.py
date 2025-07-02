@@ -3,12 +3,13 @@ from calculate_blockage.constants import DEM_PATH, VCP12, window_size
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 from io import BytesIO
+from calculate_blockage.read_dem import DemReader
 
 def make_png(matrix):
     color = [1.0, 0.0, 0.0, 0.7]  # red with 0.7 opacity
     transparent = [0.0, 0.0, 0.0, 0.0]  # fully transparent
 
-    fig, ax = plt.subplots(figsize=(51.12, 51.12), dpi=100)  # 51.09 * 100 = 5109 pixels
+    fig, ax = plt.subplots(figsize=(window_size / 100.0, window_size / 100.0), dpi=100)
     ax.axis("off")
     ax.imshow(matrix, cmap=ListedColormap([transparent, color]), interpolation="nearest")
 
@@ -41,10 +42,11 @@ def get_blockage(easting, northing, elevation_angles_deg=None, tower_m=None, agl
     return img_buf
 
 if __name__ == "__main__":
-    easting, northing = 448049.266485612548422, 2080241.215896597597748
+    easting = -10083411.900760256 # example easting coordinate
+    northing = 5102985.226796195
     img_buf = get_blockage(easting, northing)
     
-    with open("kdvn_5070.png", "wb") as f:
+    with open("kdvn_3857.png", "wb") as f:
         f.write(img_buf.getbuffer())
     
-    print("Blockage map saved as blockage_map.png")
+    print("Blockage image saved as blockage_output.png")

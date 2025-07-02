@@ -2,7 +2,7 @@ import numpy as np
 from .read_dem import DemReader
 from .ground_range import ground_range_grid
 from .beam_model import slant_range, beam_height_4_3
-from .constants import BEAM_CACHE
+from .constants import BEAM_CACHE, window_size, dem_pixel_size
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 def get_beam(ea_deg, window_size, pixel_resolution):
@@ -25,7 +25,7 @@ def calculate_blockage(elevation, ea_deg, tower_height, agl_threshold, window_si
 
 def combine_blockage_masks(dem_path, easting, northing,
                            elevation_angles, tower_height, agl_threshold,
-                           window_size=5112, pixel_res=90):
+                           window_size=window_size, pixel_res=dem_pixel_size):
     dem_reader = DemReader(dem_path)
     elevation = dem_reader.window(easting, northing, window_size)
     dem_reader.close()

@@ -39,7 +39,6 @@ class DemReader:
             dest_y = y_off - top_left_y
             window[dest_y:dest_y+valid_h, dest_x:dest_x+valid_w] = arr
 
-        window = np.flipud(window)
         return window
 
     def close(self):
