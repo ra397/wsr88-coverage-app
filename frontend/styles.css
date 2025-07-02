@@ -10,6 +10,10 @@ body {
     padding: 0;
 }
 
+.gm-style img {
+  image-rendering: pixelated;
+}
+
 .sidebar {
   /* Display on the right side of the map */
   position: absolute;
