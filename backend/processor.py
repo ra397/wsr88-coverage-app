@@ -39,3 +39,14 @@ def get_blockage(easting, northing, elevation_angles_deg=None, tower_m=None, agl
     )
     img_buf = make_png(coverage)
     return img_buf
+
+if __name__ == "__main__":
+    # Example usage
+    easting = -11637985.8953799  # example easting coordinate
+    northing = 4834985.936054093
+    img_buf = get_blockage(easting, northing)
+    
+    with open("blockage_output.png", "wb") as f:
+        f.write(img_buf.getbuffer())
+    
+    print("Blockage image saved as blockage_output.png")
