@@ -8,7 +8,6 @@ let usgsPopulationMap = {};
 
 let isLoading = false;
 
-// Define EPSG:5070 (NAD83 / CONUS Albers Equal Area)
 proj4.defs("EPSG:3857",
   "+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 " +
   "+datum=WGS84 +units=m +no_defs"
@@ -609,7 +608,7 @@ document.getElementById("clear-pod-layer").addEventListener('click', () => {
 const radarCoverageOverlays = {}
 
 function loadRadarSites(target) {
-  fetch('public/data/nexrad_epsg5070.geojson')
+  fetch('public/data/nexrad_epsg3857.geojson')
   .then(response => response.json())
   .then(data => {
     for (let i = 0; i < data.features.length; i++) {
@@ -617,7 +616,7 @@ function loadRadarSites(target) {
       const siteData = extractSiteData(description);
       const coords = {
         latitude: siteData.latitude,
-        longitude: siteData.longitude
+        longitude: siteData.longitude,
       };
 
       target.makeMarker(
@@ -680,20 +679,20 @@ function radarSiteClicked(event, marker) {
     return;
   }
 
-  const pixelSize = 90;         // meters per pixel
-  const matrixSize = 5112;      // pixels
-  const halfExtent = (pixelSize * matrixSize) / 2;  // = 229905 meters
+  const pixelSize = 114;
+  const matrixSize = 4028;
+  const halfExtent = (pixelSize * matrixSize) / 2;
 
-  const bounds5070 = {
+  const bounds3857 = {
     west: marker.properties.easting - halfExtent,
     east: marker.properties.easting + halfExtent,
     south: marker.properties.northing - halfExtent,
     north: marker.properties.northing + halfExtent,
   };
 
-  // Convert EPSG:5070 bounds to EPSG:4326
-  const [westLng, southLat] = proj4('EPSG:5070', 'EPSG:4326', [bounds5070.west, bounds5070.south]);
-  const [eastLng, northLat] = proj4('EPSG:5070', 'EPSG:4326', [bounds5070.east, bounds5070.north]);
+  // Convert EPSG:3857 bounds to EPSG:4326
+  const [westLng, southLat] = proj4('EPSG:3857', 'EPSG:4326', [bounds3857.west, bounds3857.south]);
+  const [eastLng, northLat] = proj4('EPSG:3857', 'EPSG:4326', [bounds3857.east, bounds3857.north]);
 
   const overlayBounds = {
     north: northLat,
@@ -703,9 +702,12 @@ function radarSiteClicked(event, marker) {
   };
 
   const overlay = new google.maps.GroundOverlay(
-    `public/data/nexrad_coverages/${marker.properties.siteID}.png`,
+    `/public/data/nexrad_coverages/coverages_3k/${marker.properties.siteID}.png`,
     overlayBounds,
-    { opacity: 0.7 }
+    {
+       opacity: 0.7,
+        clickable: false,
+    }
   );
   overlay.setMap(map);
   radarCoverageOverlays[marker.properties.siteID] = overlay;
