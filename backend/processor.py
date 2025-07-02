@@ -39,3 +39,12 @@ def get_blockage(easting, northing, elevation_angles_deg=None, tower_m=None, agl
     )
     img_buf = make_png(coverage)
     return img_buf
+
+if __name__ == "__main__":
+    easting, northing = 448049.266485612548422, 2080241.215896597597748
+    img_buf = get_blockage(easting, northing)
+    
+    with open("kdvn_5070.png", "wb") as f:
+        f.write(img_buf.getbuffer())
+    
+    print("Blockage map saved as blockage_map.png")
