@@ -3,6 +3,7 @@ from calculate_blockage.constants import DEM_PATH, VCP12, window_size
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 from io import BytesIO
+from calculate_blockage.read_dem import DemReader
 
 def make_png(matrix):
     color = [1.0, 0.0, 0.0, 0.7]  # red with 0.7 opacity
@@ -41,12 +42,11 @@ def get_blockage(easting, northing, elevation_angles_deg=None, tower_m=None, agl
     return img_buf
 
 if __name__ == "__main__":
-    # Example usage
-    easting = -11637985.8953799  # example easting coordinate
-    northing = 4834985.936054093
+    easting = -10083411.900760256 # example easting coordinate
+    northing = 5102985.226796195
     img_buf = get_blockage(easting, northing)
     
-    with open("blockage_output.png", "wb") as f:
+    with open("kdvn_3857.png", "wb") as f:
         f.write(img_buf.getbuffer())
     
     print("Blockage image saved as blockage_output.png")
