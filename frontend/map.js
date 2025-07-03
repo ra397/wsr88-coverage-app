@@ -467,8 +467,8 @@ function drawRaster(canvas, data, threshold) {
       if (value > threshold) {
         imageData.data[idx] = 0;
         imageData.data[idx + 1] = 0;
-        imageData.data[idx + 2] = 255;
-        imageData.data[idx + 3] = 255;
+        imageData.data[idx + 2] = 0;
+        imageData.data[idx + 3] = 125;
       } else {
         imageData.data[idx + 3] = 0;
       }
