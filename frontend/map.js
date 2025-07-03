@@ -3,6 +3,7 @@ const server = window._env_dev.SERVER_URL;
 let map;
 
 let radarLayer; // Radar layer for displaying radar coverage
+let usgsLayer;
 
 let usgsSitesLayer;
 const usgsBasinLayers = {}; // Each basin boundary is its own Data layer
@@ -30,21 +31,24 @@ async function initMap() {
   radarLayer = new RadarLayer(map, 'public/data/nexrad_epsg3857.geojson', 'public/data/nexrad_coverages');
   await radarLayer.init();
 
+  usgsLayer = new UsgsLayer(map);
+  await usgsLayer.init();
+
   // Load in the USGS sites layer
-  usgsSitesLayer = new markerCollection(map);
-  usgsSitesLayer.reactClick = usgsSiteClicked;
-  await usgsSitesLayer.init({
-    marker_options: {
-      markerFill: "green",
-      markerStroke: "green",
-      markerSize: 3.5
-    }
-  });
+  // usgsSitesLayer = new markerCollection(map);
+  // usgsSitesLayer.reactClick = usgsSiteClicked;
+  // await usgsSitesLayer.init({
+  //   marker_options: {
+  //     markerFill: "green",
+  //     markerStroke: "green",
+  //     markerSize: 3.5
+  //   }
+  // });
 
   loadPopData();
 
-  const usgsSitesURL = window._env_dev.USGS_SITES_URL;
-  loadUsgsSites(usgsSitesLayer, usgsSitesURL);
+  //const usgsSitesURL = window._env_dev.USGS_SITES_URL;
+  //loadUsgsSites(usgsSitesLayer, usgsSitesURL);
 
   // Load in population data for each USGS site
   loadUsgsPopulationMap();
@@ -135,9 +139,9 @@ function getCheckedElevationAngles() {
 
 document.getElementById("usgsSites-checkbox").addEventListener("change", function () {
   if (this.checked) {
-    usgsSitesLayer.show();
+    usgsLayer.showUsgsSites();
   } else {
-    usgsSitesLayer.hide();
+    usgsLayer.hideUsgsSites();
   }
 });
 
