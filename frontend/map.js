@@ -1,6 +1,9 @@
 const server = window._env_dev.SERVER_URL;
 
 let map;
+
+let radarLayer; // Radar layer for displaying radar coverage
+
 let usgsSitesLayer;
 const usgsBasinLayers = {}; // Each basin boundary is its own Data layer
 
@@ -13,16 +16,6 @@ proj4.defs("EPSG:3857",
   "+datum=WGS84 +units=m +no_defs"
 );
 
-// Given a center point (lat, lng) and half-height and half-width in degrees, return the bounds
-function getBoundsFromCenter(lat, lng, halfHeightDeg, halfWidthDeg) {
-  return {
-    north: lat + halfHeightDeg,
-    south: lat - halfHeightDeg,
-    east: lng + halfWidthDeg,
-    west: lng - halfWidthDeg,
-  };
-}
-
 async function initMap() {
   // Initialize the map
   map = new google.maps.Map(document.getElementById("map"), {
@@ -34,16 +27,8 @@ async function initMap() {
   });
 
   // Load is Radar sites layer
-  radarSitesLayer = new markerCollection(map);
-  radarSitesLayer.reactClick = radarSiteClicked;
-  await radarSitesLayer.init({
-    marker_options: {
-      markerFill: "red",
-      markerStroke: "red",
-      markerSize: 3.5
-    }
-  });
-  loadRadarSites(radarSitesLayer);
+  radarLayer = new RadarLayer(map, 'public/data/nexrad_epsg3857.geojson', 'public/data/nexrad_coverages');
+  await radarLayer.init();
 
   // Load in the USGS sites layer
   usgsSitesLayer = new markerCollection(map);
@@ -73,107 +58,33 @@ async function initMap() {
     const lat = e.latLng.lat();
     const lng = e.latLng.lng();
 
-    // Convert to epsg:3857
-    const [x3857, y3857] = proj4('EPSG:4326', 'EPSG:3857', [lng, lat]);
-
-    // Get AGL Threshold input
     const maxAlt = getInput(document.getElementById("aglThreshold-input"));
-    // Get tower height input
     const towerHeight = getInput(document.getElementById("towerHeight-input"));
 
-    // If the user entered an invalid input, return and do not send radar request
-    if (document.getElementById("aglThreshold-input").value && maxAlt === null) return;
-    if (document.getElementById("towerHeight-input").value && towerHeight === null) return;
-
-    // Send request to backend
-    sendRadarRequest(x3857, y3857, maxAlt, towerHeight);
-  });
-}
-
-// Send a request to the backend to calculate radar coverage
-async function sendRadarRequest(easting, northing, maxAlt = null, towerHeight = null) {
-  try {
-    isLoading = true;
-    showSpinner();
-
-    const beamModel = document.getElementById("beamModel-input").value;
-
-    const payload = {
-      easting: easting,
-      northing: northing,
-    };
-
     const unitSystem = document.getElementById("units-input").value;
-    const metersToFeet = (m) => m * 3.28084;
     const feetToMeters = (m) => m / 3.28084;
 
+    let alt_m = null;
+    let tower_m = null;
     if (maxAlt !== null) {
-      if (unitSystem == "metric") {
-        payload.max_alt_m = maxAlt;
-      } else {
-        payload.max_alt_m = feetToMeters(maxAlt);
-      }
+      alt_m = unitSystem === "metric" ? maxAlt : feetToMeters(maxAlt);
     }
-
     if (towerHeight !== null) {
-      if (unitSystem == "metric") {
-        payload.tower_m = towerHeight;
-      } else {
-        payload.tower_m = feetToMeters(towerHeight);
-      }
+      tower_m = unitSystem === "metric" ? towerHeight : feetToMeters(towerHeight);
     }
-  
     const angles = getCheckedElevationAngles();
-    if (angles.length > 0) payload.elevation_angles = angles;
 
-    const response = await fetch(`${server}/calculate_blockage`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(payload),
-    });
-
-    if (!response.ok) {
-      throw new Error("Radar coverage request failed.");
+    try {
+      isLoading = true;
+      showSpinner();
+      radarLayer.getCoverage(lat, lng, alt_m, tower_m, angles);
+    } catch {
+      console.error("Error in radarLayer.getCoverage", err);
+    } finally {
+      hideSpinner();
+      isLoading = false;
     }
-
-    
-    const blob = await response.blob();
-    console.log(blob);
-    const imageUrl = URL.createObjectURL(blob);
-
-    const halfExtent = window.constants.radar.halfExtent;
-
-    const bounds3857 = {
-      west: easting - halfExtent,
-      east: easting + halfExtent,
-      south: northing - halfExtent,
-      north: northing + halfExtent
-    };
-    const [westLng, southLat] = proj4('EPSG:3857', 'EPSG:4326', [bounds3857.west, bounds3857.south]);
-    const [eastLng, northLat] = proj4('EPSG:3857', 'EPSG:4326', [bounds3857.east, bounds3857.north]);
-
-    const overlayBounds = {
-      north: northLat,
-      south: southLat,
-      east: eastLng,
-      west: westLng,
-    };
-
-    const overlay = new google.maps.GroundOverlay(imageUrl, overlayBounds, { 
-      opacity: 0.7,
-      clickable: false,
-    });
-    overlay.setMap(map);
-  }
-  catch (err) {
-    console.log("Error fetching radar coverage: ", err);
-  }
-  finally {
-    isLoading = false;
-    hideSpinner();
-  }
+  });
 }
 
 // Toggle the visibility of a sidebar window
@@ -204,12 +115,14 @@ function getInput(input) {
   return value;
 }
 
+const spinner = document.getElementById("loading-spinner");
+
 function showSpinner() {
-  document.getElementById("loading-spinner").style.display = "block";
+  spinner.style.display = "block";
 }
 
 function hideSpinner() {
-  document.getElementById("loading-spinner").style.display = "none";
+  spinner.style.display = "none";
 }
 
 // Returns a list of checked elevation angles
@@ -496,123 +409,11 @@ document.getElementById("clear-pod-layer").addEventListener('click', () => {
 })
 
 /* Precalculated radar sites */
-const radarCoverageOverlays = {}
+document.getElementById("showAllRadarCoverages-checkbox").addEventListener('change', function () {
+  if (this.checked) {
 
-function loadRadarSites(target) {
-  fetch('public/data/nexrad_epsg3857.geojson')
-  .then(response => response.json())
-  .then(data => {
-    for (let i = 0; i < data.features.length; i++) {
-      const description = data.features[i].properties.description;
-      const siteData = extractSiteData(description);
-      const coords = {
-        latitude: siteData.latitude,
-        longitude: siteData.longitude,
-      };
-
-      target.makeMarker(
-        coords.latitude,
-        coords.longitude,
-        {
-          properties: {
-            siteID : siteData.siteId,
-            easting: data.features[i].geometry.coordinates[0],
-            northing: data.features[i].geometry.coordinates[1],
-            elevation: siteData.elevation,
-          },
-          clickable: true,
-          optimized: true
-        },
-        {
-          clickable: true,
-          mouseOver: false,
-          mouseOut: false
-        }
-      );
-    }
-  });
-}
-
-function extractSiteData(description) {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(description, 'text/html');
-  const tdElements = Array.from(doc.querySelectorAll('td'));
-
-  let siteId = null;
-  let latitude = null;
-  let longitude = null;
-  let elevation = null;
-
-  tdElements.forEach(td => {
-    const text = td.textContent.trim();
-
-    if (text.startsWith("SITE ID")) {
-      const match = text.match(/NEXRAD:([A-Z0-9]+)/);
-      if (match) siteId = match[1];
-    } else if (text.startsWith("LATITUDE")) {
-      latitude = parseFloat(text.replace("LATITUDE", "").trim());
-    } else if (text.startsWith("LONGITUDE")) {
-      longitude = parseFloat(text.replace("LONGITUDE", "").trim());
-    } else if (text.startsWith("ELEVATION")) {
-      elevation = parseFloat(text.replace("ELEVATION", "").trim());
-    }
-  });
-
-  return { siteId, latitude, longitude, elevation };
-}
-
-
-function radarSiteClicked(event, marker) {
-  if (radarCoverageOverlays[marker.properties.siteID]) {
-    // If overlay already exists for this site, remove it
-    radarCoverageOverlays[marker.properties.siteID].setMap(null);
-    delete radarCoverageOverlays[marker.properties.siteID];
-    return;
-  }
-
-  const halfExtent = window.constants.radar.halfExtent;
-
-  const bounds3857 = {
-    west: marker.properties.easting - halfExtent,
-    east: marker.properties.easting + halfExtent,
-    south: marker.properties.northing - halfExtent,
-    north: marker.properties.northing + halfExtent,
-  };
-
-  // Convert EPSG:3857 bounds to EPSG:4326
-  const [westLng, southLat] = proj4('EPSG:3857', 'EPSG:4326', [bounds3857.west, bounds3857.south]);
-  const [eastLng, northLat] = proj4('EPSG:3857', 'EPSG:4326', [bounds3857.east, bounds3857.north]);
-
-  const overlayBounds = {
-    north: northLat,
-    south: southLat,
-    east: eastLng,
-    west: westLng,
-  };
-
-  const overlay = new google.maps.GroundOverlay(
-    `/public/data/nexrad_coverages/coverages_3k/${marker.properties.siteID}.png`,
-    overlayBounds,
-    {
-       opacity: 0.7,
-        clickable: false,
-    }
-  );
-  overlay.setMap(map);
-  radarCoverageOverlays[marker.properties.siteID] = overlay;
-}
-
-const radarSiteCheckbox = document.getElementById("radarSite-checkbox");
-radarSiteCheckbox.addEventListener('click', () => {
-  if (radarSiteCheckbox.checked) {
-    radarSitesLayer.show();
   } else {
-    for (const siteId in radarCoverageOverlays) {
-      const overlay = radarCoverageOverlays[siteId];
-      overlay.setMap(null);
-      delete radarCoverageOverlays[siteId];
-    }
-    radarSitesLayer.hide();
+    
   }
 });
 

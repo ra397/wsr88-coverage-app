@@ -106,8 +106,6 @@ class markerCollection {
                 }
             }
         )
-
-
     }
 
     makeMarker = (lat, lng, opt={}, evnts={}) => {
@@ -136,6 +134,7 @@ class markerCollection {
             );
         }
         this.markers.push(m)
+        return m;
     }
 
     reactClick  = (ev, marker) => console.log (ev, marker);
