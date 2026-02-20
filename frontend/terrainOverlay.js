@@ -1,4 +1,4 @@
-class TerrainOverlay {
+class ShadedRelief {
     constructor(tileSize) {
         this.tileSize = tileSize;
         this.maxZoom = 19;
@@ -55,15 +55,15 @@ class TerrainOverlay {
 }
 
 // Event listener for terrain overlay checkbox
-document.getElementById("terrainOverlay-checkbox").addEventListener("change", function () {
+document.getElementById("shadedRelief-checkbox").addEventListener("change", function () {
     if (this.checked) {
-        terrainOverlay.setMap(window.map);
+        shadedRelief.setMap(window.map);
     } else {
-        terrainOverlay.setMap(null);
+        shadedRelief.setMap(null);
     }
 });
 
-function addTerrainStyles() {
+function addShadedReliefStyles() {
     const style = document.createElement('style');
     style.textContent = `
         div.terrain-overlay {
@@ -79,5 +79,5 @@ function addTerrainStyles() {
     document.head.appendChild(style);
 }
 
-window.TerrainOverlay = TerrainOverlay;
-window.addTerrainStyles = addTerrainStyles;
+window.ShadedRelief = ShadedRelief;
+window.addShadedReliefStyles = addShadedReliefStyles;
